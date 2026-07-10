@@ -1,4 +1,4 @@
-use axum::{Router, routing::get};
+use axum::{Router, routing::{get, post, put}};
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -7,7 +7,11 @@ async fn main() {
     tracing::info!("Hello, world!");
 
     let app = Router::new()
-        .route("/", get(|| async { "Hello, world!" }));
+        .route("/", get(|| async { "Hello, world!" }))
+        .route("/v1/refs/{namespace}/{*key}", get(|| async {}))
+        .route("/v1/refs/{namespace}/{*key}", put(|| async {}))
+        .route("/v1/storages/{storage}/start_upload", post(|| async {}))
+    ;
 
     let listener = std::env::var("BLOBMANAGER_LISTEN_ADDR");
     let listener = listener.unwrap_or_else(|_| { "0.0.0.0:3001".to_string() });
