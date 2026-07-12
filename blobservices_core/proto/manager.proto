@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package blobservices.manager;
+
+message BlobInfo {
+    bytes id = 1;
+    uint64 size = 2;
+    BlobHashes hashes = 3;
+}
+
+message BlobHashes {
+    optional uint32 crc32 = 32;
+    optional uint32 crc32c = 33;
+    optional uint64 xxh64 = 64;
+    optional bytes md5 = 5;
+    optional bytes sha1 = 1;
+    optional bytes sha256 = 256;
+    optional bytes sha256_dropbox = 260; // 256 + 4
+    optional bytes sha512 = 512;
+    optional bytes sha3_512 = 3512;
+    optional bytes blake2sp = 2;
+}
+
+message BlobLocation {
+    reserved 1;
+    string storage = 2;
+    string address = 3;
+}
+
+message GetBlobInfoByNamespaceAndKeyResponse {
+    reserved 1;
+    BlobInfo blob = 2;
+    repeated BlobLocation locations = 3;
+}

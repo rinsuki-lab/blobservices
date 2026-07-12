@@ -8,3 +8,5 @@ tracing = { workspace = true }
 blobservices_core = { workspace = true }
 tokio = { workspace = true }
 axum = { workspace = true }
+sqlx = { workspace = true }
+serde = { workspace = true }
