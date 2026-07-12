@@ -4,6 +4,7 @@ use axum::{
 };
 use tokio::net::TcpListener;
 
+mod extractors;
 mod handlers;
 mod state;
 

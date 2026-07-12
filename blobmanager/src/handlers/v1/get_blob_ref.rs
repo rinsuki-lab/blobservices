@@ -1,16 +1,16 @@
 use axum::{
-    Json,
     extract::{Path, State},
     http::StatusCode,
     response::{IntoResponse as _, Response},
 };
 use blobservices_core::proto;
 
-use crate::{NamespaceAndKey, state::AppState};
+use crate::{NamespaceAndKey, extractors::ResponseFormat, state::AppState};
 
 pub async fn get_blob_ref(
     State(state): State<AppState>,
     Path(nk): Path<NamespaceAndKey>,
+    response_format: ResponseFormat,
 ) -> Response {
     let res = sqlx::query!(
         "SELECT blobs.* FROM blob_references INNER JOIN blobs ON blobs.id = blob_references.blob_id WHERE namespace = $1 AND key = $2 LIMIT 1",
@@ -56,5 +56,5 @@ pub async fn get_blob_ref(
             .collect(),
     };
 
-    Json(res).into_response()
+    response_format.message_to_response(res)
 }
