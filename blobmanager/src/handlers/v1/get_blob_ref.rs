@@ -44,7 +44,16 @@ pub async fn get_blob_ref(
             id: res.id.as_bytes().to_vec(),
             size: res.size as u64,
             hashes: Some(proto::manager::BlobHashes {
-                ..Default::default() // TODO
+                crc32: res.cs_crc32.map(|hash| hash as u32),
+                crc32c: res.cs_crc32c.map(|hash| hash as u32),
+                xxh64: res.cs_xxh64.map(|hash| hash as u64),
+                md5: res.cs_md5,
+                sha1: res.cs_sha1,
+                sha256: res.cs_sha256,
+                sha256_dropbox: res.cs_sha256_dropbox,
+                sha512: res.cs_sha512,
+                sha3_512: res.cs_sha3_512,
+                blake2sp: res.cs_blake2sp,
             }),
         }),
         locations: locations
