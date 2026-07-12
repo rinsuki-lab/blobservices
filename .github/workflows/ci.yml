@@ -16,7 +16,9 @@ jobs:
           POSTGRES_PASSWORD: test
     steps:
     - uses: actions/checkout@v7
-    - run: echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+    - run: |
+        echo "$HOME/go/bin" >> $GITHUB_PATH
+        echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
     - parallel:
       - run: go install github.com/pgplex/pgschema@v1.12.0
       - run: brew install sqlx-cli
