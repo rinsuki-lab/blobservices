@@ -27,7 +27,7 @@ message BlobLocation {
     string address = 3;
 }
 
-message GetBlobInfoByNamespaceAndKeyResponse {
+message GetBlobRefResponse {
     reserved 1;
     BlobInfo blob = 2;
     repeated BlobLocation locations = 3;

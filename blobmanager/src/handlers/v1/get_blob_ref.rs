@@ -39,7 +39,7 @@ pub async fn get_blob_ref(
         }
     };
 
-    let res = proto::manager::GetBlobInfoByNamespaceAndKeyResponse {
+    let res = proto::manager::GetBlobRefResponse {
         blob: Some(proto::manager::BlobInfo {
             id: res.id.as_bytes().to_vec(),
             size: res.size as u64,
