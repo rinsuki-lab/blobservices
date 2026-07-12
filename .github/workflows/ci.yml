@@ -5,14 +5,7 @@ on:
   pull_request:
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v7
-    - run: sudo apt-get install -y protobuf-compiler
-    - run: cargo fmt --check
-    - run: cargo clippy
-  check-schema-diff:
+  ci:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -27,8 +20,10 @@ jobs:
         echo "$HOME/go/bin" >> $GITHUB_PATH
         echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
     - parallel:
+      - run: sudo apt-get install -y protobuf-compiler
       - run: go install github.com/pgplex/pgschema@v1.12.0
       - run: brew install sqlx-cli
+      - run: cargo fmt --check
     - name: Init Database
       run: |
         psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
@@ -47,3 +42,4 @@ jobs:
         PGSCHEMA_PLAN_USER: postgres
         PGSCHEMA_PLAN_PASSWORD: test
         PGSCHEMA_PLAN_DB: blobmanager_plan
+    - run: cargo clippy
