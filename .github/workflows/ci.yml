@@ -35,6 +35,9 @@ jobs:
     - run: cd blobmanager && sqlx migrate run
       env:
         DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
+    - run: cargo sqlx prepare --workspace && git diff --exit-code
+      env:
+        DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
     - run: cd blobmanager && ./generate_migration.sh current_diff && git diff --exit-code
       env:
         PGUSER: postgres
