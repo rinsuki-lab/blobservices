@@ -1,0 +1,161 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT blobs.* FROM blob_references INNER JOIN blobs ON blobs.id = blob_references.blob_id WHERE namespace = $1 AND key = $2 LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "size",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "size"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "cs_crc32",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_crc32"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "cs_crc32c",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_crc32c"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "cs_xxh64",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_xxh64"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "cs_md5",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_md5"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "cs_sha1",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_sha1"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "cs_sha256",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_sha256"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "cs_sha256_dropbox",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_sha256_dropbox"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "cs_sha512",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_sha512"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "cs_sha3_512",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_sha3_512"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "cs_blake2sp",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_blake2sp"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c77d3d7ae74c71d7830338153a19e7bd9b0546c5215569b001c0024bbcd5e9ad"
+}

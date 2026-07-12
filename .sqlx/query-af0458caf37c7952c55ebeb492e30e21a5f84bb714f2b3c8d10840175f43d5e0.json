@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM blob_locations WHERE blob_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "blob_locations",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "blob_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "blob_locations",
+            "name": "blob_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "storage_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "blob_locations",
+            "name": "storage_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "address",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "blob_locations",
+            "name": "address"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "attributes",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "blob_locations",
+            "name": "attributes"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "af0458caf37c7952c55ebeb492e30e21a5f84bb714f2b3c8d10840175f43d5e0"
+}
