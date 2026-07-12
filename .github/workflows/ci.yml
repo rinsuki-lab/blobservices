@@ -5,6 +5,12 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - run: cargo fmt --check
+    - run: cargo clippy
   check-schema-diff:
     runs-on: ubuntu-latest
     services:
