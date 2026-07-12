@@ -6,13 +6,13 @@ async fn main() {
     blobservices_core::init_tracing_registry();
     tracing::info!("Hello, world!");
 
-    let app = Router::new()
-        .route("/", get(|| async { "Hello, world!" }));
+    let app = Router::new().route("/", get(|| async { "Hello, world!" }));
 
     let listener = std::env::var("BLOBGATEWAY_LISTEN_ADDR");
-    let listener = listener.unwrap_or_else(|_| { "0.0.0.0:3002".to_string() });
+    let listener = listener.unwrap_or_else(|_| "0.0.0.0:3002".to_string());
     tracing::info!("trying to listen at {}", listener);
     let listener = TcpListener::bind(listener)
-        .await.expect("failed to listen server");
+        .await
+        .expect("failed to listen server");
     axum::serve(listener, app).await.unwrap();
 }
