@@ -31,7 +31,9 @@ jobs:
         DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
     - run: cd blobmanager && ./generate_migration.sh current_diff && git diff --exit-code
       env:
+        PGUSER: postgres
         PGPASSWORD: test
         PGDATABASE: blobmanager
+        PGSCHEMA_PLAN_USER: postgres
         PGSCHEMA_PLAN_PASSWORD: test
         PGSCHEMA_PLAN_DB: blobmanager_plan
