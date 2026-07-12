@@ -22,10 +22,10 @@ jobs:
     - parallel:
       - run: go install github.com/pgplex/pgschema@v1.12.0
       - run: brew install sqlx-cli
-      - name: Init Database
-        run: |
-          psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
-          psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager_plan'
+    - name: Init Database
+      run: |
+        psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
+        psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager_plan'
     - run: cd blobmanager && sqlx migrate run
       env:
         DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
