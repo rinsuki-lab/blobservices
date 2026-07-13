@@ -32,3 +32,31 @@ message GetBlobRefResponse {
     BlobInfo blob = 2;
     repeated BlobLocation locations = 3;
 }
+
+message PutBlobRefRequest {
+    oneof content {
+        // 将来的に namespace/key でアクセス制御をかける予定なので、それをバイパスしてblobを直指定できるこれは unsafe
+        PutBlobRefWithBlobId unsafeSetBlobId = 1;
+        // 任意の storage/address を指定できるこれは unsafe (将来的に storage からの証明を付ける)
+        PutBlobRefWithNewBlobInfo unsafeNewBlob = 2;
+        // PutBlobRefFromOtherRef fromOtherRef = 3;
+    }
+}
+
+message PutBlobRefWithBlobId {
+    bytes blob_id = 1;
+}
+
+message PutBlobRefWithNewBlobInfo {
+    uint64 size = 2;
+    BlobHashes hashes = 3;
+    string storage = 4;
+    string address = 5;
+}
+
+// message PutBlobRefFromOtherRef {
+//     reserved 1;
+//     string namespace = 2;
+//     string key = 3;
+//     optional bytes expected_blob_id = 4; // 設定されていた場合、現在の値と一致しなかったらエラー (HTTP 409)
+// }
