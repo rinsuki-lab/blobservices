@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO blob_references (id, blob_id, namespace, key) VALUES (gen_random_uuid(), $1, $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5807515a6cf793996cbe47e52549ea735f229c412411ee3e3b9c96c2dabc8754"
+}
