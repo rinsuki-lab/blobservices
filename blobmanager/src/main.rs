@@ -1,6 +1,6 @@
 use axum::{
     Router,
-    routing::{get, post, put},
+    routing::{get, post},
 };
 use tokio::net::TcpListener;
 
@@ -25,9 +25,8 @@ async fn main() {
         .route("/", get(|| async { "Hello, world!" }))
         .route(
             "/v1/refs/{namespace}/{*key}",
-            get(handlers::v1::get_blob_ref),
+            get(handlers::v1::get_blob_ref).put(handlers::v1::put_blob_ref),
         )
-        .route("/v1/refs/{namespace}/{*key}", put(|| async {}))
         .route("/v1/storages/{storage}/start_upload", post(|| async {}))
         .with_state(state);
 
