@@ -7,3 +7,5 @@ edition = "2024"
 tracing = { workspace = true }
 blobservices_core = { workspace = true }
 tokio = { workspace = true }
+axum = { workspace = true }
+tower-http = { version = "0.7.0", features = ["fs"] }
