@@ -25,9 +25,7 @@ pub async fn put_blob_ref(
 
     let blob_id = match content {
         proto::manager::put_blob_ref_request::Content::UnsafeNewBlob(new_blob) => {
-            let blob_id =
-                insert_new_blob(&mut tx, new_blob.size, new_blob.hashes.unwrap_or_default())
-                    .await?;
+            let blob_id = insert_new_blob(&mut tx, new_blob.size, new_blob.hashes).await?;
             insert_new_location(&mut tx, blob_id, &new_blob.storage, &new_blob.address).await?;
             blob_id
         }

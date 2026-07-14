@@ -1,24 +1,24 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package blobservices.manager;
 
 import "core.proto";
 
 message BlobInfo {
-    bytes id = 1;
-    uint64 size = 2;
-    core.BlobHashes hashes = 3;
+    required bytes id = 1;
+    required uint64 size = 2;
+    required core.BlobHashes hashes = 3;
 }
 
 message BlobLocation {
     reserved 1;
-    string storage = 2;
-    string address = 3;
+    required string storage = 2;
+    required string address = 3;
 }
 
 message GetBlobRefResponse {
     reserved 1;
-    BlobInfo blob = 2;
+    required BlobInfo blob = 2;
     repeated BlobLocation locations = 3;
 }
 
@@ -33,14 +33,14 @@ message PutBlobRefRequest {
 }
 
 message PutBlobRefWithBlobId {
-    bytes blob_id = 1;
+    required bytes blob_id = 1;
 }
 
 message PutBlobRefWithNewBlobInfo {
-    uint64 size = 2;
-    core.BlobHashes hashes = 3;
-    string storage = 4;
-    string address = 5;
+    required uint64 size = 2;
+    required core.BlobHashes hashes = 3;
+    required string storage = 4;
+    required string address = 5;
 }
 
 // message PutBlobRefFromOtherRef {

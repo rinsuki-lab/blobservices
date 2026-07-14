@@ -40,10 +40,10 @@ pub async fn get_blob_ref(
     };
 
     let res = proto::manager::GetBlobRefResponse {
-        blob: Some(proto::manager::BlobInfo {
+        blob: proto::manager::BlobInfo {
             id: res.id.as_bytes().to_vec(),
             size: res.size as u64,
-            hashes: Some(proto::core::BlobHashes {
+            hashes: proto::core::BlobHashes {
                 crc32: res.cs_crc32.map(|hash| hash as u32),
                 crc32c: res.cs_crc32c.map(|hash| hash as u32),
                 xxh64: res.cs_xxh64.map(|hash| hash as u64),
@@ -55,8 +55,8 @@ pub async fn get_blob_ref(
                 sha3_256: res.cs_sha3_256,
                 sha3_512: res.cs_sha3_512,
                 blake2sp: res.cs_blake2sp,
-            }),
-        }),
+            },
+        },
         locations: locations
             .into_iter()
             .map(|l| proto::manager::BlobLocation {
