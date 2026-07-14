@@ -6,5 +6,6 @@ import "core.proto";
 
 message UploadBlobResponse {
     string address = 1;
-    core.BlobHashes hashes = 2;
+    uint64 size = 2;
+    core.BlobHashes hashes = 3;
 }
