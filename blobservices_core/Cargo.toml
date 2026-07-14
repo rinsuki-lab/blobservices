@@ -9,6 +9,7 @@ prost = "0.14.4"
 serde = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+axum = { workspace = true }
 
 [build-dependencies]
 pbjson-build = "0.9.0"

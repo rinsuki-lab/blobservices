@@ -3,9 +3,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse as _, Response},
 };
-use blobservices_core::proto;
+use blobservices_core::{extractors::ResponseFormat, proto};
 
-use crate::{NamespaceAndKey, extractors::ResponseFormat, state::AppState};
+use crate::{NamespaceAndKey, state::AppState};
 
 pub async fn get_blob_ref(
     State(state): State<AppState>,

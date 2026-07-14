@@ -1,3 +1,4 @@
+pub mod extractors;
 mod init_tracing;
 #[allow(clippy::all)]
 pub mod proto;
