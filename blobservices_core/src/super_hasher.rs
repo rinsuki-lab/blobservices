@@ -70,6 +70,7 @@ impl SuperHasher {
                 sha256: Some(self.sha256.finalize().to_vec()),
                 sha256_dropbox: None, // TODO
                 sha512: Some(self.sha512.finalize().to_vec()),
+                sha3_256: Some(self.sha3_256.finalize().to_vec()),
                 sha3_512: Some(self.sha3_512.finalize().to_vec()),
                 blake2sp: Some(self.blake2sp.finalize().as_bytes().to_vec()),
             },

@@ -134,6 +134,17 @@
             "name": "cs_blake2sp"
           }
         }
+      },
+      {
+        "ordinal": 12,
+        "name": "cs_sha3_256",
+        "type_info": "Bytea",
+        "origin": {
+          "Table": {
+            "table": "blobs",
+            "name": "cs_sha3_256"
+          }
+        }
       }
     ],
     "parameters": {
@@ -145,6 +156,7 @@
     "nullable": [
       false,
       false,
+      true,
       true,
       true,
       true,

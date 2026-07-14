@@ -52,6 +52,7 @@ pub async fn get_blob_ref(
                 sha256: res.cs_sha256,
                 sha256_dropbox: res.cs_sha256_dropbox,
                 sha512: res.cs_sha512,
+                sha3_256: res.cs_sha3_256,
                 sha3_512: res.cs_sha3_512,
                 blake2sp: res.cs_blake2sp,
             }),

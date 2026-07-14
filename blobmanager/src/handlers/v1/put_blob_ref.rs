@@ -75,9 +75,9 @@ async fn insert_new_blob(
         r#"
         INSERT INTO blobs(
             id, size, cs_crc32, cs_crc32c, cs_xxh64, cs_md5, cs_sha1,
-            cs_sha256, cs_sha256_dropbox, cs_sha512, cs_sha3_512, cs_blake2sp
+            cs_sha256, cs_sha256_dropbox, cs_sha512, cs_sha3_256, cs_sha3_512, cs_blake2sp
         )
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id
         "#,
         size,
@@ -89,6 +89,7 @@ async fn insert_new_blob(
         hashes.sha256,
         hashes.sha256_dropbox,
         hashes.sha512,
+        hashes.sha3_256,
         hashes.sha3_512,
         hashes.blake2sp,
     )

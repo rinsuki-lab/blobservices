@@ -11,6 +11,7 @@ message BlobHashes {
     optional bytes sha256 = 256;
     optional bytes sha256_dropbox = 260; // 256 + 4
     optional bytes sha512 = 512;
+    optional bytes sha3_256 = 3256;
     optional bytes sha3_512 = 3512;
     optional bytes blake2sp = 2;
 }

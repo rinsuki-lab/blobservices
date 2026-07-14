@@ -9,6 +9,7 @@ CREATE TABLE blobs (
     cs_sha256 BYTEA NULL CHECK (cs_sha256 IS NULL OR octet_length(cs_sha256) = 32),
     cs_sha256_dropbox BYTEA NULL CHECK (cs_sha256_dropbox IS NULL OR octet_length(cs_sha256_dropbox) = 32),
     cs_sha512 BYTEA NULL CHECK (cs_sha512 IS NULL OR octet_length(cs_sha512) = 64),
+    cs_sha3_256 BYTEA NULL CHECK (cs_sha3_256 IS NULL OR octet_length(cs_sha3_256) = 32),
     cs_sha3_512 BYTEA NULL CHECK (cs_sha3_512 IS NULL OR octet_length(cs_sha3_512) = 64),
     cs_blake2sp BYTEA NULL CHECK (cs_blake2sp IS NULL OR octet_length(cs_blake2sp) = 32)
 );

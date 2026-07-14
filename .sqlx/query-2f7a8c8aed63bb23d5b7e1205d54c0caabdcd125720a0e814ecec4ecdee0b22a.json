@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO blobs(\n            id, size, cs_crc32, cs_crc32c, cs_xxh64, cs_md5, cs_sha1,\n            cs_sha256, cs_sha256_dropbox, cs_sha512, cs_sha3_512, cs_blake2sp\n        )\n        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n        RETURNING id\n        ",
+  "query": "\n        INSERT INTO blobs(\n            id, size, cs_crc32, cs_crc32c, cs_xxh64, cs_md5, cs_sha1,\n            cs_sha256, cs_sha256_dropbox, cs_sha512, cs_sha3_256, cs_sha3_512, cs_blake2sp\n        )\n        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)\n        RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -27,6 +27,7 @@
         "Bytea",
         "Bytea",
         "Bytea",
+        "Bytea",
         "Bytea"
       ]
     },
@@ -34,5 +35,5 @@
       false
     ]
   },
-  "hash": "b8238179797bde4dadcf01403502063c1f77680b92c3d3eacc2922ff8378efeb"
+  "hash": "2f7a8c8aed63bb23d5b7e1205d54c0caabdcd125720a0e814ecec4ecdee0b22a"
 }
