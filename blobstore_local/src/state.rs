@@ -23,9 +23,6 @@ impl AppStateInner {
             p.push("done");
             p
         };
-        AppState::new(AppStateInner {
-            wip_dir,
-            done_dir,
-        })
+        AppState::new(AppStateInner { wip_dir, done_dir })
     }
 }
