@@ -1,3 +1,1 @@
-pub async fn put_object_simple() {
-    
-}
+pub async fn put_object_simple() {}

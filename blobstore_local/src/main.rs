@@ -4,8 +4,8 @@ use axum::{
 };
 use tokio::net::TcpListener;
 
-mod state;
 mod handlers;
+mod state;
 
 #[tokio::main]
 async fn main() {
