@@ -5,6 +5,7 @@ use axum::{
 use tokio::net::TcpListener;
 
 mod state;
+mod handlers;
 
 #[tokio::main]
 async fn main() {
@@ -15,7 +16,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
-        .route("/v1/simple", post(|| async {}))
+        .route("/v1/simple", post(handlers::v1::put_object_simple))
         .nest_service(
             "/v1/simple/",
             tower_http::services::ServeDir::new(&state.root_dir)
