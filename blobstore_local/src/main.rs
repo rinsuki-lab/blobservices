@@ -19,7 +19,7 @@ async fn main() {
         .route("/v1/simple", post(handlers::v1::put_object_simple))
         .nest_service(
             "/v1/simple/",
-            tower_http::services::ServeDir::new(&state.root_dir)
+            tower_http::services::ServeDir::new(&state.done_dir)
                 .append_index_html_on_directories(false),
         )
         .with_state(state);

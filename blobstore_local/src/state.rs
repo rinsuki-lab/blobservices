@@ -1,7 +1,6 @@
 use std::{path::PathBuf, str::FromStr, sync::Arc};
 
 pub struct AppStateInner {
-    pub root_dir: String,
     pub wip_dir: PathBuf,
     pub done_dir: PathBuf,
 }
@@ -25,7 +24,6 @@ impl AppStateInner {
             p
         };
         AppState::new(AppStateInner {
-            root_dir,
             wip_dir,
             done_dir,
         })
