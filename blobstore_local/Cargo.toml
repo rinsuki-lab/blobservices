@@ -9,3 +9,5 @@ blobservices_core = { workspace = true }
 tokio = { workspace = true }
 axum = { workspace = true }
 tower-http = { version = "0.7.0", features = ["fs"] }
+uuid = { version = "1.23.5", features = ["v7"] }
+futures-util = "0.3.32"
