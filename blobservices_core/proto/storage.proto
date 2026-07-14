@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package blobservices.storage;
+
+import "core.proto";
+
+message UploadBlobResponse {
+    string address = 1;
+    core.BlobHashes hashes = 2;
+}

@@ -43,7 +43,7 @@ pub async fn get_blob_ref(
         blob: Some(proto::manager::BlobInfo {
             id: res.id.as_bytes().to_vec(),
             size: res.size as u64,
-            hashes: Some(proto::manager::BlobHashes {
+            hashes: Some(proto::core::BlobHashes {
                 crc32: res.cs_crc32.map(|hash| hash as u32),
                 crc32c: res.cs_crc32c.map(|hash| hash as u32),
                 xxh64: res.cs_xxh64.map(|hash| hash as u64),

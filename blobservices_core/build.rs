@@ -9,7 +9,7 @@ fn main() -> std::io::Result<()> {
         .compile_well_known_types()
         .extern_path(".google.protobuf", "::pbjson_types")
         // Generate prost structs
-        .compile_protos(&["proto/manager.proto"], &["proto/"])?;
+        .compile_protos(&["proto/manager.proto", "proto/storage.proto"], &["proto/"])?;
 
     let descriptor_set = std::fs::read(descriptor_path)?;
     pbjson_build::Builder::new()

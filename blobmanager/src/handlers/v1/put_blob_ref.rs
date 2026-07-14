@@ -64,7 +64,7 @@ pub async fn put_blob_ref(
 async fn insert_new_blob(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     size: u64,
-    hashes: proto::manager::BlobHashes,
+    hashes: proto::core::BlobHashes,
 ) -> Result<Uuid, Response> {
     let size: i64 = size.try_into().map_err(|e| {
         tracing::error!(err=?e, "FAILED_TO_CAST_I64");
