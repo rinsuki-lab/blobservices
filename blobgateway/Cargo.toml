@@ -14,3 +14,6 @@ reqwest = { version = "0.13.4", default-features = false, features = ["native-tl
 prost = { workspace = true }
 uuid = { workspace = true }
 url = { version = "2.5.8", features = ["serde"] }
+hyper = { version = "1.10.1", features = ["client", "http1"] }
+hyper-util = { version = "0.1.20", features = ["client-legacy", "http1"] }
+http-body-util = "0.1.4"

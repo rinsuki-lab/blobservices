@@ -22,7 +22,7 @@ async fn main() {
         .route("/", get(|| async { "Hello, world!" }))
         .route(
             "/v1/content/by-ref/{namespace}/{*key}",
-            get(handlers::v1::get_blob_content_by_ref),
+            get(handlers::v1::get_blob_content_by_ref).put(handlers::v1::put_blob_content_by_ref),
         )
         .with_state(state);
 
