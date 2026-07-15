@@ -1,11 +1,11 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package blobservices.storage;
 
 import "core.proto";
 
 message UploadBlobResponse {
-    string address = 1;
-    uint64 size = 2;
-    core.BlobHashes hashes = 3;
+    required string address = 1;
+    required uint64 size = 2;
+    required core.BlobHashes hashes = 3;
 }

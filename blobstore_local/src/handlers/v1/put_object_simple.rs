@@ -87,6 +87,6 @@ pub async fn put_object_simple(
     Ok(res.message_to_response(proto::storage::UploadBlobResponse {
         address: final_path,
         size,
-        hashes: Some(hashes),
+        hashes,
     }))
 }
