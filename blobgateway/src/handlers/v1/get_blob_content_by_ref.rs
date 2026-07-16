@@ -4,15 +4,16 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use blobservices_core::proto;
+use hyper::header;
 use prost::Message as _;
 use reqwest::StatusCode;
 
 use crate::{NamespaceAndKey, state::AppState};
 
-pub async fn get_blob_content_by_ref(
-    State(state): State<AppState>,
-    Path(nk): Path<NamespaceAndKey>,
-) -> Result<Response, Response> {
+async fn get_current_blob_info_by_ref(
+    state: &AppState,
+    nk: &NamespaceAndKey,
+) -> Result<proto::manager::GetBlobRefResponse, Response> {
     let mut res = state.config.manager.url.clone();
     res.path_segments_mut()
         .unwrap()
@@ -41,14 +42,54 @@ pub async fn get_blob_content_by_ref(
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     })?;
 
-    let res = proto::manager::GetBlobRefResponse::decode(res).map_err(|e| {
+    proto::manager::GetBlobRefResponse::decode(res).map_err(|e| {
         tracing::error!(err=?e, "FAILED_TO_GET_REF_INFO_DECODE");
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
-    })?;
+    })
+}
 
-    if res.blob.size == 0 {
+fn build_response_from_blob_info(
+    info: &proto::manager::GetBlobRefResponse,
+) -> axum::http::response::Builder {
+    let mut res = Response::builder().header(header::CONTENT_LENGTH, info.blob.size);
+
+    let etag = info
+        .blob
+        .hashes
+        .md5
+        .as_ref()
+        .map(|x| format!("\"{}\"", hex::encode(x)));
+
+    if let Some(etag) = etag {
+        res = res.header("ETag", etag);
+    }
+
+    res
+}
+
+pub async fn head_blob_content_by_ref(
+    State(state): State<AppState>,
+    Path(nk): Path<NamespaceAndKey>,
+) -> Result<Response, Response> {
+    let info = get_current_blob_info_by_ref(&state, &nk).await?;
+    let res = build_response_from_blob_info(&info);
+    Ok(res
+        .body("".into())
+        .expect("should not fail to build empty body"))
+}
+
+pub async fn get_blob_content_by_ref(
+    State(state): State<AppState>,
+    Path(nk): Path<NamespaceAndKey>,
+) -> Result<Response, Response> {
+    let info = get_current_blob_info_by_ref(&state, &nk).await?;
+    let res = build_response_from_blob_info(&info);
+
+    if info.blob.size == 0 {
         // 何もないならそのまま返してしまえばいいじゃない
-        return Ok(StatusCode::OK.into_response());
+        return Ok(res
+            .body("".into())
+            .expect("should not fail to build empty body"));
     }
 
     let mut storage_res = None;
@@ -56,7 +97,7 @@ pub async fn get_blob_content_by_ref(
         let mut lac: Vec<(
             &proto::manager::BlobLocation,
             &crate::config::StoreServerConfig,
-        )> = res
+        )> = info
             .locations
             .iter()
             .filter_map(|location| {
@@ -98,21 +139,11 @@ pub async fn get_blob_content_by_ref(
         break;
     }
     let Some(storage_res) = storage_res else {
-        let blob_id = uuid::Uuid::from_slice(&res.blob.id).unwrap();
+        let blob_id = uuid::Uuid::from_slice(&info.blob.id).unwrap();
         tracing::info!(blob_id=%blob_id, "FAILED_TO_GET_BLOB_NO_READABLE_PROVIDER");
         return Err(StatusCode::SERVICE_UNAVAILABLE.into_response());
     };
 
-    let etag = res
-        .blob
-        .hashes
-        .md5
-        .map(|x| format!("\"{}\"", hex::encode(x)));
-
-    let mut res = Response::builder().header("Content-Length", res.blob.size);
-    if let Some(etag) = etag {
-        res = res.header("ETag", etag);
-    }
     let res = res
         .body(Body::from_stream(storage_res.bytes_stream()))
         .expect("FAILED_TO_BUILD_RES");
