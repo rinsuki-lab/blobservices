@@ -12,12 +12,6 @@ use serde::de::DeserializeOwned;
 /// bodies.
 pub struct RequestMessage<M>(pub M);
 
-impl<M> RequestMessage<M> {
-    pub fn into_inner(self) -> M {
-        self.0
-    }
-}
-
 impl<S, M> FromRequest<S> for RequestMessage<M>
 where
     S: Send + Sync,
