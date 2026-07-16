@@ -1,7 +1,4 @@
-use std::{
-    io::ErrorKind,
-    path::Component,
-};
+use std::{io::ErrorKind, path::Component};
 
 use axum::{
     extract::{Path, State},
