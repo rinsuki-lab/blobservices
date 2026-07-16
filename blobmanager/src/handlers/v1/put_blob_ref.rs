@@ -4,7 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use blobservices_core::proto;
-use sqlx::types::Uuid;
+use uuid::Uuid;
 
 use crate::{NamespaceAndKey, extractors::RequestMessage, state::AppState};
 
@@ -115,9 +115,10 @@ async fn insert_new_location(
     storage: &str,
     address: &str,
 ) -> Result<Uuid, Response> {
+    let id = Uuid::now_v7();
     sqlx::query!(
-        "INSERT INTO blob_locations(id, blob_id, storage_id, address) VALUES (gen_random_uuid(), $1, $2, $3) RETURNING id",
-        blob_id, storage, address
+        "INSERT INTO blob_locations(id, blob_id, storage_id, address) VALUES ($1, $2, $3, $4) RETURNING id",
+        id, blob_id, storage, address
     )
         .fetch_one(&mut **tx)
         .await

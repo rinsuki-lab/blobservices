@@ -10,4 +10,5 @@ tokio = { workspace = true }
 axum = { workspace = true }
 sqlx = { workspace = true }
 serde = { workspace = true }
+uuid = { workspace = true }
 prost = "0.14.4"
