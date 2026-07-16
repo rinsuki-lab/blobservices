@@ -103,8 +103,19 @@ pub async fn get_blob_content_by_ref(
         return Err(StatusCode::SERVICE_UNAVAILABLE.into_response());
     };
 
-    Ok(Response::builder()
-        .header("Content-Length", res.blob.size)
+    let etag = res
+        .blob
+        .hashes
+        .md5
+        .map(|x| format!("\"{}\"", hex::encode(x)));
+
+    let mut res = Response::builder().header("Content-Length", res.blob.size);
+    if let Some(etag) = etag {
+        res = res.header("ETag", etag);
+    }
+    let res = res
         .body(Body::from_stream(storage_res.bytes_stream()))
-        .expect("FAILED_TO_BUILD_RES"))
+        .expect("FAILED_TO_BUILD_RES");
+
+    Ok(res)
 }
