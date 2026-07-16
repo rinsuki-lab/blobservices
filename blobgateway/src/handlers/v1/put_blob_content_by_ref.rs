@@ -155,7 +155,7 @@ async fn upload_to_specific_store(
     }
 
     let res = state.hyper_client.request(req).await;
-    drop(tx.lock().await.take()); // 必要あるのかわからないが、一応ここで rx を捨てておく (100 Continue 来ずに失敗した時用)
+    drop(tx.lock().await.take()); // 必要あるのかわからないが、一応ここで tx を捨てておく (100 Continue 来ずに失敗した時用)
     let res = match res {
         Ok(r) => r,
         Err(e) => {
