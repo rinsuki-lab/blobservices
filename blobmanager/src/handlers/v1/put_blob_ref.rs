@@ -36,6 +36,15 @@ pub async fn put_blob_ref(
             })?
         }
     };
+    tx.commit().await.map_err(|e| {
+        tracing::error!(err=?e, "FAILED_TO_COMMIT_BLOB_TX");
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    })?;
+
+    let mut tx = state.db_pool.begin().await.map_err(|e| {
+        tracing::error!(err = ?e, "FAILED_TO_BEGIN_TX");
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    })?;
 
     sqlx::query!(
         "INSERT INTO blob_references (id, blob_id, namespace, key) VALUES (gen_random_uuid(), $1, $2, $3)",
