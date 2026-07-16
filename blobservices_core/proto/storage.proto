@@ -9,3 +9,8 @@ message UploadBlobResponse {
     required uint64 size = 2;
     required core.BlobHashes hashes = 3;
 }
+
+message GetHashesResponse {
+    required uint64 size = 2;
+    required core.BlobHashes hashes = 3;
+}

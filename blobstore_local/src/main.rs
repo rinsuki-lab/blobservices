@@ -22,6 +22,10 @@ async fn main() {
             tower_http::services::ServeDir::new(&state.done_dir)
                 .append_index_html_on_directories(false),
         )
+        .route(
+            "/v1/hashes/{*address}",
+            get(handlers::v1::get_object_hashes),
+        )
         .with_state(state);
 
     let listener = std::env::var("BLOBSTORE_LOCAL_LISTEN_ADDR");
