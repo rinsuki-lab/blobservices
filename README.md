@@ -10,7 +10,7 @@ flowchart LR
     Client_B((Client))
 
     subgraph Region A
-        subgraph blobgateway_A
+        subgraph blobgateway_A[blobgateway]
             blobgateway_A1[blobgateway]
         end
         subgraph blobstore_A1[blobstore]
@@ -21,7 +21,7 @@ flowchart LR
         end
     end
     subgraph Region B
-        subgraph blobgateway_B
+        subgraph blobgateway_B[blobgateway]
             blobgateway_B1[blobgateway]
         end
         subgraph blobstore_B1[blobstore]
