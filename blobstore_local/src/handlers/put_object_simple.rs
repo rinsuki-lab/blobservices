@@ -1,23 +1,24 @@
 use axum::{
     body::Body,
-    extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use blobservices_core::{SuperHasher, extractors::ResponseFormat, proto};
+use blobservices_core::{
+    SuperHasher,
+    proto::{self, storage::UploadBlobResponse},
+};
 use futures_util::StreamExt as _;
 use tokio::{
     fs::{self, File},
     io::AsyncWriteExt,
 };
 
-use crate::state::AppState;
+use crate::provider::LocalStoreProvider;
 
 pub async fn put_object_simple(
-    State(state): State<AppState>,
-    res: ResponseFormat,
+    state: &LocalStoreProvider,
     body: Body,
-) -> Result<Response, Response> {
+) -> Result<UploadBlobResponse, Response> {
     let mut stream = body.into_data_stream();
     let id = uuid::Uuid::now_v7();
     let id = id.to_string();
@@ -84,9 +85,9 @@ pub async fn put_object_simple(
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     })?;
 
-    Ok(res.message_to_response(proto::storage::UploadBlobResponse {
+    Ok(proto::storage::UploadBlobResponse {
         address: final_path,
         size,
         hashes,
-    }))
+    })
 }
