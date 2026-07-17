@@ -19,7 +19,8 @@ pub trait BlobProvider: Send + Sync + Sized {
         // TODO: range header?
     ) -> impl Future<Output = Result<(u64, Body), Response>> + Send;
 
-    fn get_object_hashes(
+    /// blob本体を読まずに得られるハッシュのみを返す
+    fn get_object_hashes_fast(
         &self,
         address: String,
     ) -> impl Future<Output = Result<proto::storage::GetHashesResponse, Response>> + Send;

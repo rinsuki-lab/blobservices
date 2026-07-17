@@ -50,11 +50,11 @@ impl blobstore_core::BlobProvider for LocalStoreProvider {
         handlers::get_object_simple(self, address).await
     }
 
-    async fn get_object_hashes(
+    async fn get_object_hashes_fast(
         &self,
         address: String,
     ) -> Result<blobservices_core::proto::storage::GetHashesResponse, axum::response::Response>
     {
-        handlers::get_object_hashes(self, address).await
+        handlers::get_object_hashes_fast(self, address).await
     }
 }

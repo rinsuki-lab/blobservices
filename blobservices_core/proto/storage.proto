@@ -14,3 +14,14 @@ message GetHashesResponse {
     required uint64 size = 2;
     required core.BlobHashes hashes = 3;
 }
+
+enum HashSpeed {
+    // データ本体を読まずともわかるハッシュのみを帰す (e.g. S3 の場合 multipart でないオブジェクトは ETag から MD5 だけわかる)
+    fast = 1;
+    // データ本体をすべて読んで SuperHasher がサポートしているすべてのハッシュを返す
+    slow = 2;
+}
+
+message GetHashesQuery {
+    required HashSpeed speed = 1;
+}

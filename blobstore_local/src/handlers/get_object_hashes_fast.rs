@@ -4,12 +4,12 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use blobservices_core::{SuperHasher, proto};
-use tokio::{fs::File, io::AsyncReadExt};
+use blobservices_core::proto;
+use tokio::{fs::File, io::AsyncSeekExt};
 
 use crate::{provider::LocalStoreProvider, utils};
 
-pub async fn get_object_hashes(
+pub async fn get_object_hashes_fast(
     state: &LocalStoreProvider,
     address: String,
 ) -> Result<proto::storage::GetHashesResponse, Response> {
@@ -24,21 +24,13 @@ pub async fn get_object_hashes(
         }
     })?;
 
-    let mut hasher = SuperHasher::new();
+    let size = file.seek(std::io::SeekFrom::End(0)).await.map_err(|e| {
+        tracing::error!(err=?e, "FAILED_TO_SEEK_END");
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    })?;
 
-    let mut buf = [0u8; 64 * 1024];
-    loop {
-        let result = file.read(&mut buf).await.map_err(|e| {
-            tracing::error!(err=?e, address=address, "FAILED_TO_READ_FILE");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        })?;
-        if result == 0 {
-            break;
-        }
-        hasher.update(&buf[0..result]);
-    }
-
-    let (size, hashes) = hasher.finalize();
-
-    Ok(proto::storage::GetHashesResponse { size, hashes })
+    Ok(proto::storage::GetHashesResponse {
+        size,
+        ..Default::default()
+    })
 }
