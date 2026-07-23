@@ -156,6 +156,7 @@ dependencies = [
  "hex",
  "http-body-util",
  "hyper",
+ "hyper-tls",
  "hyper-util",
  "prost",
  "reqwest",

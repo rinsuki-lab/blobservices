@@ -6,7 +6,7 @@ use crate::config::Config;
 
 pub struct AppStateInner {
     pub hyper_client: hyper_util::client::legacy::Client<
-        hyper_util::client::legacy::connect::HttpConnector,
+        hyper_tls::HttpsConnector<hyper_util::client::legacy::connect::HttpConnector>,
         reqwest::Body,
     >,
     pub client: reqwest::Client,
@@ -17,11 +17,12 @@ pub type AppState = Arc<AppStateInner>;
 
 impl AppStateInner {
     pub async fn new() -> AppState {
+        let https_connector = hyper_tls::HttpsConnector::new();
         let hyper_client =
             hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
                 .pool_timer(hyper_util::rt::tokio::TokioTimer::new())
                 .pool_idle_timeout(Duration::from_secs(30))
-                .build_http();
+                .build(https_connector);
         let client = reqwest::ClientBuilder::new()
             .user_agent("blobgateway/dev") // TODO: リリース時はこのバージョンをちゃんと埋めるようにする
             .build()
