@@ -1,5 +1,7 @@
 use blobstore_core::{BlobProvider, Body, Response};
 
+use crate::handlers;
+
 pub struct S3StoreProvider {}
 
 impl S3StoreProvider {
@@ -13,7 +15,7 @@ impl BlobProvider for S3StoreProvider {
         &self,
         body: Body,
     ) -> Result<blobservices_core::proto::storage::UploadBlobResponse, Response> {
-        todo!()
+        handlers::put_object_simple(self, body).await
     }
 
     async fn get_object_simple(
@@ -21,13 +23,13 @@ impl BlobProvider for S3StoreProvider {
         address: String,
         // TODO: range header?
     ) -> Result<(u64, Body), Response> {
-        todo!()
+        handlers::get_object_simple(self, address).await
     }
 
     async fn get_object_hashes_fast(
         &self,
         address: String,
     ) -> Result<blobservices_core::proto::storage::GetHashesResponse, Response> {
-        todo!()
+        handlers::get_object_hashes_fast(self, address).await
     }
 }

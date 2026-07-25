@@ -1,3 +1,4 @@
+mod handlers;
 mod provider;
 
 #[tokio::main]
