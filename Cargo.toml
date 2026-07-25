@@ -16,6 +16,7 @@ tracing = "0.1.44"
 serde = { version = "1.0.228", features = ["derive"] }
 prost = "0.14.4"
 uuid = { version = "1.23.5", features = ["v7"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["native-tls", "stream"] }
 
 blobservices_core = { path = "./blobservices_core" }
 blobstore_core = { path = "./blobstore_core" }

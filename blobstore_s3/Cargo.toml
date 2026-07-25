@@ -8,3 +8,4 @@ blobstore_core = { workspace = true }
 blobservices_core = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true }
+reqwest = { workspace = true }
