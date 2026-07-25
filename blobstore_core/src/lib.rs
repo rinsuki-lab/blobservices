@@ -10,6 +10,9 @@ pub use provider::BlobProvider;
 
 use crate::state::AppStateInner;
 
+pub use axum::body::Body;
+pub use axum::response::Response;
+
 pub async fn run<P: BlobProvider + 'static>(provider: P) {
     let state = AppStateInner::new(provider).await;
     let app = Router::new()

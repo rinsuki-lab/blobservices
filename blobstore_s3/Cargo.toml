@@ -1,0 +1,10 @@
+[package]
+name = "blobstore_s3"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+blobstore_core = { workspace = true }
+blobservices_core = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }

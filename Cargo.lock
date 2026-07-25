@@ -230,6 +230,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "blobstore_s3"
+version = "0.1.0"
+dependencies = [
+ "blobservices_core",
+ "blobstore_core",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

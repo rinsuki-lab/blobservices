@@ -5,7 +5,7 @@ members = [
     "blobservices_core",
     "blobmanager",
     "blobstore_local",
-    "blobgateway", "blobstore_core",
+    "blobgateway", "blobstore_core", "blobstore_s3",
 ]
 
 [workspace.dependencies]
