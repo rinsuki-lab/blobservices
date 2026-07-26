@@ -1,7 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
 use blobservices_core::utils::load_from_env_or_file_or_panic;
-use tokio::{fs::File, io::AsyncReadExt};
 
 use crate::config::Config;
 
