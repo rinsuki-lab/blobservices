@@ -1,16 +1,32 @@
+use blobservices_core::utils::load_from_env_or_file_or_panic;
 use blobstore_core::{BlobProvider, Body, Response};
 
-use crate::handlers;
+use crate::{config::Config, handlers};
 
-pub struct S3StoreProvider {}
+pub struct S3StoreProvider {
+    pub client: reqwest::Client,
+    pub config: Config,
+}
 
 impl S3StoreProvider {
     pub async fn new() -> S3StoreProvider {
-        S3StoreProvider {}
+        let client = reqwest::ClientBuilder::new()
+            .user_agent("blobstore_s3/dev") // TODO: リリース時はこのバージョンをちゃんと埋めるようにする
+            .build()
+            .expect("Failed to build HTTP client");
+        let config = load_from_env_or_file_or_panic("BLOBSTORE_S3_CONFIG");
+        let config: Config =
+            serde_json::from_str(&config).expect("failed to parse blobstore_s3 config");
+
+        S3StoreProvider { client, config }
     }
 }
 
 impl BlobProvider for S3StoreProvider {
+    fn env_prefix() -> &'static str {
+        "BLOBSTORE_S3"
+    }
+
     async fn put_object_simple(
         &self,
         body: Body,
