@@ -27,10 +27,17 @@ flowchart LR
         subgraph blobstore_B1[blobstore]
             blobstore_local_B1[blobstore_local]
         end
+        subgraph blobstore_B2[blobstore]
+            blobstore_s3_B1[blobstore_s3]
+        end
     end
     subgraph Region C
         blobmanager
         Postgres
+    end
+    subgraph AWS
+        Cloudfront
+        S3
     end
 
     Client_A --> blobgateway_A1
@@ -38,11 +45,16 @@ flowchart LR
     blobgateway_A1 --> blobstore_local_A1
     blobgateway_A1 --> blobstore_local_A2
     blobgateway_A1 --> blobstore_local_B1
+    blobgateway_A1 --> blobstore_s3_B1
     blobgateway_B1 --> blobstore_local_A1
     blobgateway_B1 --> blobstore_local_A2
     blobgateway_B1 --> blobstore_local_B1
+    blobgateway_B1 --> blobstore_s3_B1
     blobgateway_A1 --> blobmanager
     blobgateway_B1 --> blobmanager
+    Cloudfront --> S3
+    blobstore_s3_B1 --> S3
+    blobstore_s3_B1 --> Cloudfront
     blobmanager --> Postgres
 ```
 
@@ -56,7 +68,12 @@ blob のデータ本体には関わらない (ので帯域がそんなに太く�
 ### blobstore_*
 
 blob のデータ本体を保持している (逆にメタデータなどは保存していない)。
-現在はローカルのファイルシステム用の実装 (`blobstore_local`) しか実装がないが、実装さえすればランダムアクセス可能なほとんどすべてのストレージに対応可能 (e.g. S3)。
+実装さえすればランダムアクセス可能なほとんどすべてのストレージに対応可能。
+
+現在は以下の実装がある。
+* `blobstore_local`: ローカルファイルシステム用
+* `blobstore_s3`: Amazon S3 用 (WIP)
+  * 互換サーバーでも動くはずだが、`Expect: 100-continue` の対応が必須なので注意
 
 #### blobstore_core
 
