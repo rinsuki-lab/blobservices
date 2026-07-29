@@ -13,10 +13,10 @@ serde = { workspace = true }
 reqwest = { workspace = true }
 prost = { workspace = true }
 uuid = { workspace = true }
-url = { version = "2.5.8", features = ["serde"] }
-hyper = { version = "1.10.1", features = ["client", "http1"] }
-hyper-util = { version = "0.1.20", features = ["client-legacy", "http1"] }
+url = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
 http-body-util = "0.1.4"
 futures = "0.3.32"
 hex = "0.4.3"
-hyper-tls = "0.6.0"
+hyper-tls = { workspace = true }

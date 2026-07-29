@@ -1,11 +1,12 @@
 use blobservices_core::utils::load_from_env_or_file_or_panic;
 use blobstore_core::{BlobProvider, Body, Response};
 
-use crate::{config::Config, handlers};
+use crate::{config::Config, handlers, signer::SigV4Signer};
 
 pub struct S3StoreProvider {
     pub client: reqwest::Client,
     pub config: Config,
+    pub sigv4_signer: SigV4Signer,
 }
 
 impl S3StoreProvider {
@@ -17,8 +18,13 @@ impl S3StoreProvider {
         let config = load_from_env_or_file_or_panic("BLOBSTORE_S3_CONFIG");
         let config: Config =
             serde_json::from_str(&config).expect("failed to parse blobstore_s3 config");
+        let sigv4_signer = SigV4Signer::new(config.s3_region.clone());
 
-        S3StoreProvider { client, config }
+        S3StoreProvider {
+            client,
+            config,
+            sigv4_signer,
+        }
     }
 }
 

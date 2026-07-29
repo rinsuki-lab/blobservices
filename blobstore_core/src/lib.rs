@@ -12,6 +12,8 @@ pub use provider::BlobProvider;
 use crate::state::AppStateInner;
 
 pub use axum::body::Body;
+pub use axum::http::StatusCode;
+pub use axum::response::IntoResponse;
 pub use axum::response::Response;
 
 pub async fn run<P: BlobProvider + 'static>(provider: P) {

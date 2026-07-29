@@ -1,6 +1,8 @@
 mod config;
 mod handlers;
 mod provider;
+mod signer;
+mod utils;
 
 #[tokio::main]
 async fn main() {
