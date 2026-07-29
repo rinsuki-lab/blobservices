@@ -6,6 +6,7 @@ use axum::{
 mod handlers;
 mod provider;
 mod state;
+mod utils;
 pub use provider::BlobProvider;
 
 use crate::state::AppStateInner;

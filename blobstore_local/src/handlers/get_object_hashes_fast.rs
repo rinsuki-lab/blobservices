@@ -7,13 +7,14 @@ use axum::{
 use blobservices_core::proto;
 use tokio::{fs::File, io::AsyncSeekExt};
 
-use crate::{provider::LocalStoreProvider, utils};
+use crate::provider::LocalStoreProvider;
 
 pub async fn get_object_hashes_fast(
     state: &LocalStoreProvider,
     address: String,
 ) -> Result<proto::storage::GetHashesResponse, Response> {
-    let path = utils::sanitize_path(&state.done_dir, &address);
+    let mut path = state.done_dir.clone();
+    path.push(address);
 
     let mut file = File::options().read(true).open(path).await.map_err(|e| {
         if e.kind() == ErrorKind::NotFound {

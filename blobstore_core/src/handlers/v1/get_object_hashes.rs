@@ -10,7 +10,7 @@ use blobservices_core::{
 };
 use futures::StreamExt as _;
 
-use crate::{BlobProvider, state::AppState};
+use crate::{BlobProvider, state::AppState, utils::sanitize_address};
 
 pub async fn get_object_hashes<P: BlobProvider>(
     state: State<AppState<P>>,
@@ -18,6 +18,11 @@ pub async fn get_object_hashes<P: BlobProvider>(
     Path(address): Path<String>,
     Query(params): Query<proto::storage::GetHashesQuery>,
 ) -> Result<Response, Response> {
+    let address = sanitize_address(&address).ok_or_else(|| {
+        tracing::warn!(address = address, "SANITIZE_ADDRESS_FAILED");
+        StatusCode::BAD_REQUEST.into_response()
+    })?;
+
     let result = if params.speed() == HashSpeed::Fast {
         state.provider.get_object_hashes_fast(address).await
     } else {

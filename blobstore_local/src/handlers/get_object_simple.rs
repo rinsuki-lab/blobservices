@@ -8,13 +8,14 @@ use axum::{
 use tokio::{fs::File, io::AsyncSeekExt};
 use tokio_util::io::ReaderStream;
 
-use crate::{provider::LocalStoreProvider, utils};
+use crate::provider::LocalStoreProvider;
 
 pub async fn get_object_simple(
     state: &LocalStoreProvider,
     address: String,
 ) -> Result<(u64, Body), Response> {
-    let path = utils::sanitize_path(&state.done_dir, &address);
+    let mut path = state.done_dir.clone();
+    path.push(address);
 
     let mut file = File::options().read(true).open(path).await.map_err(|e| {
         if e.kind() == ErrorKind::NotFound {

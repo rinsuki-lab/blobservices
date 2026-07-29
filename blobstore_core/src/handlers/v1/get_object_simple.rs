@@ -4,12 +4,17 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::{BlobProvider, state::AppState};
+use crate::{BlobProvider, state::AppState, utils::sanitize_address};
 
 pub async fn get_object_simple<P: BlobProvider>(
     state: State<AppState<P>>,
     Path(address): Path<String>,
 ) -> Result<Response, Response> {
+    let address = sanitize_address(&address).ok_or_else(|| {
+        tracing::warn!(address = address, "SANITIZE_ADDRESS_FAILED");
+        StatusCode::BAD_REQUEST.into_response()
+    })?;
+
     // TODO: support range request
     state
         .provider

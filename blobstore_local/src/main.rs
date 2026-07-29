@@ -1,6 +1,5 @@
 mod handlers;
 mod provider;
-mod utils;
 
 #[tokio::main]
 async fn main() {
