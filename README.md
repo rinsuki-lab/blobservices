@@ -36,7 +36,7 @@ flowchart LR
         Postgres
     end
     subgraph AWS
-        Cloudfront
+        CloudFront
         S3
     end
 
@@ -52,9 +52,9 @@ flowchart LR
     blobgateway_B1 --> blobstore_s3_B1
     blobgateway_A1 --> blobmanager
     blobgateway_B1 --> blobmanager
-    Cloudfront --> S3
+    CloudFront --> S3
     blobstore_s3_B1 --> S3
-    blobstore_s3_B1 --> Cloudfront
+    blobstore_s3_B1 --> CloudFront
     blobmanager --> Postgres
 ```
 
