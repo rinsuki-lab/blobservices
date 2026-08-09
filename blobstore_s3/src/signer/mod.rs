@@ -1,5 +1,6 @@
 // TODO: implement cloudfront signatures
-// mod cloudfront;
+mod cloudfront;
 mod sigv4;
 
+pub use cloudfront::CloudFrontSigningKey;
 pub use sigv4::SigV4Signer;

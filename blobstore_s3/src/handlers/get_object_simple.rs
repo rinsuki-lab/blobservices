@@ -7,15 +7,27 @@ pub async fn get_object_simple(
     state: &S3StoreProvider,
     address: String,
 ) -> Result<(u64, Body), Response> {
-    // TODO: use cdn_url for GET (if exists)
-    let url = get_s3_url_with_key(&state.config.s3_base_url, &address);
+    let req = if let Some(cdn_config) = &state.config.cdn {
+        let mut url = get_s3_url_with_key(&cdn_config.base_url, &address);
+        if let Some(sign_config) = &cdn_config.private_key {
+            sign_config.sign_to_url(&mut url);
+        }
+        hyper::Request::builder()
+            .method(hyper::Method::GET)
+            .uri(url.as_str())
+            .body(reqwest::Body::default())
+            .unwrap()
+    } else {
+        let url = get_s3_url_with_key(&state.config.s3_base_url, &address);
 
-    let mut req = hyper::Request::builder()
-        .method(hyper::Method::GET)
-        .uri(url.as_str())
-        .body(reqwest::Body::default())
-        .unwrap();
-    state.sigv4_signer.sign(&mut req);
+        let mut req = hyper::Request::builder()
+            .method(hyper::Method::GET)
+            .uri(url.as_str())
+            .body(reqwest::Body::default())
+            .unwrap();
+        state.sigv4_signer.sign(&mut req);
+        req
+    };
 
     let res = state
         .client
