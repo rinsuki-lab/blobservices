@@ -23,7 +23,7 @@ pub async fn put_object_simple(
     let id = uuid::Uuid::now_v7();
     let id = id.to_string();
     // one folder per 3~4 days
-    let final_path = format!("{}/{}/{}.bin", &id[0..3], &id[3..5], &id);
+    let final_path = format!("{}/{}/{}.bin", &id[0..3], &id[3..5], id);
 
     let mut wip_path = state.wip_dir.clone();
     wip_path.push(&final_path);

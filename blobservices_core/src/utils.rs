@@ -5,7 +5,7 @@ pub fn load_from_env_or_file_or_panic(env_base: &str) -> String {
     match config {
         Ok(s) => return s,
         Err(std::env::VarError::NotPresent) => (),
-        _ => _ = config.expect(&format!("{} env value's contents are not valid", env_base)),
+        Err(e) => panic!("{} env value's contents are not valid: {:?}", env_base, e),
     };
 
     let config_file_env = format!("{}_FILE", env_base);

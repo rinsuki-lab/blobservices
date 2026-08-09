@@ -25,7 +25,7 @@ pub async fn put_object_simple(
     let id = uuid::Uuid::now_v7();
     let id = id.to_string();
     // one folder per 3~4 days
-    let address = format!("{}/{}/{}.bin", &id[0..3], &id[3..5], &id);
+    let address = format!("{}/{}/{}.bin", &id[0..3], &id[3..5], id);
 
     let url = get_s3_url_with_key(&state.config.s3_base_url, &address);
 
@@ -57,7 +57,7 @@ pub async fn put_object_simple(
                 let hasher = hasher.clone();
                 async move {
                     if let Ok(x) = &x {
-                        hasher.lock().await.update(&x);
+                        hasher.lock().await.update(x);
                     }
                     x
                 }
@@ -117,13 +117,12 @@ pub async fn put_object_simple(
 
     let upstream_etag = headers
         .get("ETag")
-        .map(|x| x.to_str().ok())
-        .flatten()
+        .and_then(|x| x.to_str().ok())
         .ok_or_else(|| {
             tracing::warn!("S3_DIDNT_SEND_ETAG_HEADER");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         })?;
-    let expected_etag = format!("\"{}\"", hex::encode(&hashes.md5()));
+    let expected_etag = format!("\"{}\"", hex::encode(hashes.md5()));
     if upstream_etag != expected_etag {
         tracing::error!(
             upstream = upstream_etag,

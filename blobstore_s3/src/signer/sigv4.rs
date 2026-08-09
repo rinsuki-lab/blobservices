@@ -5,7 +5,7 @@ use hmac::{KeyInit, Mac};
 use hyper::{Request, header::HeaderValue};
 use sha2::Digest;
 
-const AWS_SERVICE: &'static str = "s3";
+const AWS_SERVICE: &str = "s3";
 
 pub struct SigV4Signer {
     access_key_id: String,
@@ -153,7 +153,7 @@ impl SigV4Signer {
         );
         let cred_scope_with_keyid = format!("{}/{}", self.access_key_id, cred_scope);
 
-        let (canonical_request, signed_headers) = make_canonical_request(&req);
+        let (canonical_request, signed_headers) = make_canonical_request(req);
         let signing_key = self.make_signing_key(&current_date);
 
         let mut signature = HmacSha256::new_from_slice(&signing_key).unwrap();
