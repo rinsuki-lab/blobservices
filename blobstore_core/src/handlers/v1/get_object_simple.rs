@@ -16,18 +16,13 @@ pub async fn get_object_simple<P: BlobProvider>(
     })?;
 
     // TODO: support range request
-    state
-        .provider
-        .get_object_simple(address)
-        .await
-        .and_then(|(length, body)| {
-            Response::builder()
-                .status(StatusCode::OK)
-                .header("Content-Length", length)
-                .body(body)
-                .map_err(|e| {
-                    tracing::error!(err=?e, "FAILED_TO_BUILD_RESPONSE");
-                    StatusCode::INTERNAL_SERVER_ERROR.into_response()
-                })
+    let (length, body) = state.provider.get_object_simple(address).await?;
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Length", length)
+        .body(body)
+        .map_err(|e| {
+            tracing::error!(err=?e, "FAILED_TO_BUILD_RESPONSE");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
         })
 }
