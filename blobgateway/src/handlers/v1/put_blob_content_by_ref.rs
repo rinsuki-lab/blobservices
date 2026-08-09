@@ -8,7 +8,7 @@ use axum::{
 use blobservices_core::proto::{self};
 use futures::StreamExt;
 use http_body_util::BodyExt;
-use hyper::StatusCode;
+use hyper::{StatusCode, body::Body as _};
 use prost::Message;
 use tokio::sync::Mutex;
 
@@ -19,6 +19,7 @@ pub async fn put_blob_content_by_ref(
     Path(nk): Path<NamespaceAndKey>,
     body: Body,
 ) -> Result<(), Response> {
+    let size = body.size_hint().exact();
     let body = Arc::new(Mutex::new(Some(body)));
     let mut store_configs = state
         .config
@@ -40,7 +41,7 @@ pub async fn put_blob_content_by_ref(
             };
         }
         if let Some(result) =
-            upload_to_specific_store(&state, &nk, store_id, store_config, &body).await
+            upload_to_specific_store(&state, &nk, store_id, store_config, &body, size).await
         {
             upload_result = Some((store_id, result));
             break;
@@ -100,6 +101,7 @@ async fn upload_to_specific_store(
     store_id: &str,
     store_config: &crate::config::StoreServerConfig,
     body: &Arc<Mutex<Option<Body>>>,
+    size: Option<u64>,
 ) -> Option<proto::storage::UploadBlobResponse> {
     let mut req = store_config.url.clone();
     req.path_segments_mut().unwrap().push("v1").push("simple");
@@ -112,25 +114,28 @@ async fn upload_to_specific_store(
     let body = body.clone();
     // Expect: 100-continue を送り、帰ってくるまで body を消費したくないので、わざわざ reqwest ではなく hyper を使っている
     // reqwest には 100 Continue を待つ機能がまだない https://github.com/seanmonstar/reqwest/issues/2845
-    let req = hyper::Request::builder()
+    let mut req = hyper::Request::builder()
         .method(hyper::Method::POST)
         .version(hyper::Version::HTTP_11)
         .uri(req.as_str())
         .header(hyper::header::EXPECT, "100-continue")
-        .header(hyper::header::ACCEPT, "application/protobuf")
-        .body(reqwest::Body::wrap_stream(
-            futures::stream::once(async move {
-                match rx.await {
-                    Ok(_) => {}
-                    Err(_) => return None,
-                };
+        .header(hyper::header::ACCEPT, "application/protobuf");
+    if let Some(size) = size {
+        req = req.header(hyper::header::CONTENT_LENGTH, size);
+    }
+    let req = req.body(reqwest::Body::wrap_stream(
+        futures::stream::once(async move {
+            match rx.await {
+                Ok(_) => {}
+                Err(_) => return None,
+            };
 
-                let body = body.lock().await.take()?;
-                Some(body.into_data_stream())
-            })
-            .filter_map(async |x| x)
-            .flatten(),
-        ));
+            let body = body.lock().await.take()?;
+            Some(body.into_data_stream())
+        })
+        .filter_map(async |x| x)
+        .flatten(),
+    ));
     let mut req = match req {
         Ok(req) => req,
         Err(e) => {

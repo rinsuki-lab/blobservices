@@ -1,9 +1,15 @@
+use std::time::Duration;
+
 use blobservices_core::utils::load_from_env_or_file_or_panic;
 use blobstore_core::{BlobProvider, Body, Response};
 
 use crate::{config::Config, handlers, signer::SigV4Signer};
 
 pub struct S3StoreProvider {
+    pub hyper_client: hyper_util::client::legacy::Client<
+        hyper_tls::HttpsConnector<hyper_util::client::legacy::connect::HttpConnector>,
+        reqwest::Body,
+    >,
     pub client: reqwest::Client,
     pub config: Config,
     pub sigv4_signer: SigV4Signer,
@@ -11,6 +17,12 @@ pub struct S3StoreProvider {
 
 impl S3StoreProvider {
     pub async fn new() -> S3StoreProvider {
+        let https_connector = hyper_tls::HttpsConnector::new();
+        let hyper_client =
+            hyper_util::client::legacy::Client::builder(hyper_util::rt::TokioExecutor::new())
+                .pool_timer(hyper_util::rt::tokio::TokioTimer::new())
+                .pool_idle_timeout(Duration::from_secs(30))
+                .build(https_connector);
         let client = reqwest::ClientBuilder::new()
             .user_agent("blobstore_s3/dev") // TODO: リリース時はこのバージョンをちゃんと埋めるようにする
             .build()
@@ -21,6 +33,7 @@ impl S3StoreProvider {
         let sigv4_signer = SigV4Signer::new(config.s3_region.clone());
 
         S3StoreProvider {
+            hyper_client,
             client,
             config,
             sigv4_signer,
