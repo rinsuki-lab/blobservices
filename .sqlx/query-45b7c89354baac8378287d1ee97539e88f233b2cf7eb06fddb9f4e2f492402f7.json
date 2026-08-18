@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO blob_locations(id, blob_id, storage_id, address) VALUES ($1, $2, $3, $4) RETURNING id",
+  "query": "\n        INSERT INTO blob_locations(id, blob_id, storage_id, address)\n        VALUES ($1, $2, $3, $4)\n        RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -27,5 +27,5 @@
       false
     ]
   },
-  "hash": "1a29999b54e37d904d9d96f1f437dc153525d88cac8c71469f17f1dd544776aa"
+  "hash": "45b7c89354baac8378287d1ee97539e88f233b2cf7eb06fddb9f4e2f492402f7"
 }

@@ -46,19 +46,45 @@ pub async fn put_blob_ref(
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     })?;
 
-    sqlx::query!(
-        "INSERT INTO blob_references (id, blob_id, namespace, key) VALUES (gen_random_uuid(), $1, $2, $3)",
-        blob_id,
+    let new_reference_id = Uuid::now_v7();
+    let revision_id = Uuid::now_v7();
+
+    let reference_id = sqlx::query!(
+        r#"
+        INSERT INTO blob_references (id, namespace, key, current_revision_id)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (namespace, key) DO UPDATE
+        SET current_revision_id = EXCLUDED.current_revision_id
+        RETURNING id
+        "#,
+        new_reference_id,
         nk.namespace,
-        nk.key
+        nk.key,
+        revision_id
     )
-        .execute(&mut *tx)
-        .await
-        .map_err(|e| {
-            // TODO: conflictをちゃんとハンドルする
-            tracing::error!(err = ?e, "FAILED_TO_INSERT_BLOB_REF");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        })?;
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!(err = ?e, "FAILED_TO_UPSERT_BLOB_REF");
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    })?
+    .id;
+
+    sqlx::query!(
+        r#"
+        INSERT INTO blob_reference_revisions (id, reference_id, blob_id)
+        VALUES ($1, $2, $3)
+        "#,
+        revision_id,
+        reference_id,
+        blob_id
+    )
+    .execute(&mut *tx)
+    .await
+    .map_err(|e| {
+        tracing::error!(err = ?e, "FAILED_TO_INSERT_BLOB_REF_REVISION");
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    })?;
 
     tx.commit().await.map_err(|e| {
         tracing::error!(err = ?e, "FAILED_TO_COMMIT");
@@ -117,15 +143,22 @@ async fn insert_new_location(
 ) -> Result<Uuid, Response> {
     let id = Uuid::now_v7();
     sqlx::query!(
-        "INSERT INTO blob_locations(id, blob_id, storage_id, address) VALUES ($1, $2, $3, $4) RETURNING id",
-        id, blob_id, storage, address
+        r#"
+        INSERT INTO blob_locations(id, blob_id, storage_id, address)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+        "#,
+        id,
+        blob_id,
+        storage,
+        address
     )
-        .fetch_one(&mut **tx)
-        .await
-        .map_err(|e| {
-            // TODO: conflictをちゃんとハンドルする (か、上書きするかを検討する)
-            tracing::error!(err=?e, "FAILED_TO_INSERT_BLOB_LOC");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        })
-        .map(|r| r.id)
+    .fetch_one(&mut **tx)
+    .await
+    .map_err(|e| {
+        // TODO: conflictをちゃんとハンドルする (か、上書きするかを検討する)
+        tracing::error!(err=?e, "FAILED_TO_INSERT_BLOB_LOC");
+        StatusCode::INTERNAL_SERVER_ERROR.into_response()
+    })
+    .map(|r| r.id)
 }

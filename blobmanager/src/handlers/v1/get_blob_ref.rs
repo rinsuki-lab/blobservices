@@ -13,12 +13,20 @@ pub async fn get_blob_ref(
     response_format: ResponseFormat,
 ) -> Response {
     let res = sqlx::query!(
-        "SELECT blobs.* FROM blob_references INNER JOIN blobs ON blobs.id = blob_references.blob_id WHERE namespace = $1 AND key = $2 LIMIT 1",
+        r#"
+        SELECT blobs.*
+        FROM blob_references
+        INNER JOIN blob_reference_revisions
+            ON blob_reference_revisions.id = blob_references.current_revision_id
+        INNER JOIN blobs ON blobs.id = blob_reference_revisions.blob_id
+        WHERE namespace = $1 AND key = $2
+        LIMIT 1
+        "#,
         nk.namespace,
         nk.key
     )
-        .fetch_one(&state.db_pool)
-        .await;
+    .fetch_one(&state.db_pool)
+    .await;
     let res = match res {
         Ok(r) => r,
         Err(sqlx::Error::RowNotFound) => return StatusCode::NOT_FOUND.into_response(),
