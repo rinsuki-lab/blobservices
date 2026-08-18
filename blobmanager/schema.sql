@@ -23,12 +23,21 @@ CREATE TABLE blob_references (
     id UUID PRIMARY KEY,
     namespace TEXT NOT NULL CHECK (length(namespace) BETWEEN 1 AND 127 AND namespace ~ '^[a-z0-9._-]+$'),
     key TEXT NOT NULL CHECK (length(key) BETWEEN 1 AND 2047),
-    blob_id UUID NOT NULL REFERENCES blobs (id) ON DELETE NO ACTION,
-    attributes JSONB NULL CHECK (attributes IS NULL OR jsonb_typeof(attributes) = 'object'),
-    metadata JSONB NULL CHECK (metadata IS NULL OR jsonb_typeof(metadata) = 'object'),
+    current_revision_id UUID NOT NULL,
     CONSTRAINT "UQ_br_namespace_key" UNIQUE (namespace, key)
 );
-CREATE INDEX "IDX_br_blob" ON blob_references (blob_id);
+
+CREATE TABLE blob_reference_revisions (
+    id UUID PRIMARY KEY,
+    reference_id UUID NOT NULL REFERENCES blob_references (id) ON DELETE NO ACTION,
+    blob_id UUID NOT NULL REFERENCES blobs (id) ON DELETE NO ACTION,
+    attributes JSONB NULL CHECK (attributes IS NULL OR jsonb_typeof(attributes) = 'object'),
+    metadata JSONB NULL CHECK (metadata IS NULL OR jsonb_typeof(metadata) = 'object')
+);
+CREATE INDEX "IDX_brr_blob" ON blob_reference_revisions (blob_id);
+CREATE UNIQUE INDEX "IDX_brr_refid_id" ON blob_reference_revisions (reference_id, id);
+
+ALTER TABLE blob_references ADD FOREIGN KEY (id, current_revision_id) REFERENCES blob_reference_revisions (reference_id, id) ON DELETE NO ACTION DEFERRABLE INITIALLY DEFERRED;
 
 CREATE TABLE blob_locations (
     id UUID PRIMARY KEY,

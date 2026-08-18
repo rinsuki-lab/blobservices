@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS blobs (
     cs_sha256 bytea,
     cs_sha256_dropbox bytea,
     cs_sha512 bytea,
+    cs_sha3_256 bytea,
     cs_sha3_512 bytea,
     cs_blake2sp bytea,
     CONSTRAINT blobs_pkey PRIMARY KEY (id),
@@ -17,6 +18,7 @@ CREATE TABLE IF NOT EXISTS blobs (
     CONSTRAINT blobs_cs_sha1_check CHECK (cs_sha1 IS NULL OR octet_length(cs_sha1) = 20),
     CONSTRAINT blobs_cs_sha256_check CHECK (cs_sha256 IS NULL OR octet_length(cs_sha256) = 32),
     CONSTRAINT blobs_cs_sha256_dropbox_check CHECK (cs_sha256_dropbox IS NULL OR octet_length(cs_sha256_dropbox) = 32),
+    CONSTRAINT blobs_cs_sha3_256_check CHECK (cs_sha3_256 IS NULL OR octet_length(cs_sha3_256) = 32),
     CONSTRAINT blobs_cs_sha3_512_check CHECK (cs_sha3_512 IS NULL OR octet_length(cs_sha3_512) = 64),
     CONSTRAINT blobs_cs_sha512_check CHECK (cs_sha512 IS NULL OR octet_length(cs_sha512) = 64),
     CONSTRAINT blobs_size_check CHECK (size >= 0)
@@ -48,20 +50,33 @@ CREATE TABLE IF NOT EXISTS blob_locations (
 
 CREATE INDEX IF NOT EXISTS "IDX_bl_blob_storage" ON blob_locations (blob_id, storage_id);
 
+CREATE TABLE IF NOT EXISTS blob_reference_revisions (
+    id uuid,
+    reference_id uuid NOT NULL,
+    blob_id uuid NOT NULL,
+    attributes jsonb,
+    metadata jsonb,
+    CONSTRAINT blob_reference_revisions_pkey PRIMARY KEY (id),
+    CONSTRAINT blob_reference_revisions_blob_id_fkey FOREIGN KEY (blob_id) REFERENCES blobs (id),
+    CONSTRAINT blob_reference_revisions_attributes_check CHECK (attributes IS NULL OR jsonb_typeof(attributes) = 'object'::text),
+    CONSTRAINT blob_reference_revisions_metadata_check CHECK (metadata IS NULL OR jsonb_typeof(metadata) = 'object'::text)
+);
+
+CREATE INDEX IF NOT EXISTS "IDX_brr_blob" ON blob_reference_revisions (blob_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "IDX_brr_refid_id" ON blob_reference_revisions (reference_id, id);
+
 CREATE TABLE IF NOT EXISTS blob_references (
     id uuid,
     namespace text NOT NULL,
     key text NOT NULL,
-    blob_id uuid NOT NULL,
-    attributes jsonb,
-    metadata jsonb,
+    current_revision_id uuid NOT NULL,
     CONSTRAINT blob_references_pkey PRIMARY KEY (id),
     CONSTRAINT "UQ_br_namespace_key" UNIQUE (namespace, key),
-    CONSTRAINT blob_references_blob_id_fkey FOREIGN KEY (blob_id) REFERENCES blobs (id),
-    CONSTRAINT blob_references_attributes_check CHECK (attributes IS NULL OR jsonb_typeof(attributes) = 'object'::text),
+    CONSTRAINT blob_references_id_current_revision_id_fkey FOREIGN KEY (id, current_revision_id) REFERENCES blob_reference_revisions (reference_id, id) DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT blob_references_key_check CHECK (length(key) >= 1 AND length(key) <= 2047),
-    CONSTRAINT blob_references_metadata_check CHECK (metadata IS NULL OR jsonb_typeof(metadata) = 'object'::text),
     CONSTRAINT blob_references_namespace_check CHECK (length(namespace) >= 1 AND length(namespace) <= 127 AND namespace ~ '^[a-z0-9._-]+$'::text)
 );
 
-CREATE INDEX IF NOT EXISTS "IDX_br_blob" ON blob_references (blob_id);
+ALTER TABLE blob_reference_revisions
+ADD CONSTRAINT blob_reference_revisions_reference_id_fkey FOREIGN KEY (reference_id) REFERENCES blob_references (id);
