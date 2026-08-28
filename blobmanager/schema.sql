@@ -48,3 +48,49 @@ CREATE TABLE blob_locations (
     CONSTRAINT "UQ_bl_storage_address" UNIQUE (storage_id, address)
 );
 CREATE INDEX "IDX_bl_blob_storage" ON blob_locations (blob_id, storage_id);
+
+CREATE TABLE blob_transform_shared_parameters (
+    id UUID PRIMARY KEY,
+    transform_type INTEGER NOT NULL,
+
+    -- NULL の場合 shared parameter 用意する意味がないため
+    parameters JSONB NOT NULL CHECK (jsonb_typeof(parameters) = 'object')
+);
+CREATE UNIQUE INDEX "IDX_btsp_tt_id" ON blob_transform_shared_parameters (transform_type, id);
+
+CREATE TABLE blob_transform_shared_parameter_alias (
+    id UUID PRIMARY KEY,
+
+    namespace TEXT NOT NULL CHECK (namespace != ''),
+    slug TEXT NOT NULL CHECK (slug != ''),
+    parameter_id UUID NOT NULL REFERENCES blob_transform_shared_parameters(id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX "IDX_btspa_ns_slug" ON blob_transform_shared_parameter_alias (namespace, slug);
+CREATE INDEX "IDX_btspa_pid" ON blob_transform_shared_parameter_alias (parameter_id);
+
+CREATE TABLE blob_transforms (
+    id UUID PRIMARY KEY,
+    src_blob_id UUID NOT NULL REFERENCES blobs(id) ON DELETE NO ACTION,
+    dst_blob_id UUID NOT NULL REFERENCES blobs(id) ON DELETE NO ACTION,
+    transform_type INTEGER NOT NULL,
+    is_reversible BOOLEAN NOT NULL,
+
+    -- shared_parameter がある場合、トップレベルだけ見て上書き
+    -- (e.g. {"a": {"b": 1, "c": 2}, "d": 3} が shared, {"a": {"b": 2}} が固有だった場合、{"a": {"b": 2}, "d": 3} になる)
+    shared_parameter_id UUID NULL,
+    parameters JSONB NULL CHECK (parameters IS NULL OR jsonb_typeof(parameters) = 'object'),
+    FOREIGN KEY (transform_type, shared_parameter_id) REFERENCES blob_transform_shared_parameters(transform_type, id) ON DELETE NO ACTION
+);
+CREATE UNIQUE INDEX "IDX_bt_src_dst" ON blob_transforms (src_blob_id, dst_blob_id);
+CREATE INDEX "IDX_bt_dst_rev" ON blob_transforms (dst_blob_id, is_reversible DESC);
+CREATE INDEX "IDX_bt_tt_spi" ON blob_transforms (transform_type, shared_parameter_id);
+
+-- dst = src[start..<start+dst.size]
+CREATE TABLE blob_slices (
+    src_blob_id UUID NOT NULL REFERENCES blobs(id) ON DELETE NO ACTION,
+    dst_blob_id UUID NOT NULL REFERENCES blobs(id) ON DELETE NO ACTION,
+    start BIGINT NOT NULL CHECK (start >= 0),
+    PRIMARY KEY (dst_blob_id, src_blob_id, start)
+);
+
+CREATE INDEX "IDX_bs_src_dst" ON blob_slices (src_blob_id, dst_blob_id);
