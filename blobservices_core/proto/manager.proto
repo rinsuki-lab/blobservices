@@ -3,6 +3,7 @@ syntax = "proto2";
 package blobservices.manager;
 
 import "core.proto";
+import "transform.proto";
 
 message BlobInfo {
     required bytes id = 1;
@@ -16,10 +17,29 @@ message BlobLocation {
     required string address = 3;
 }
 
+message BlobSourceTransform {
+    required transform.TransformParameters transform = 1;
+    required bool is_reverse = 2;
+}
+
+message BlobSource {
+    repeated BlobLocation location = 1;
+    repeated BlobSource parent = 2;
+
+    optional BlobSourceTransform transform = 3;
+
+    optional uint64 src_start = 4 [ default = 0 ];
+    optional uint64 dst_start = 5 [ default = 0 ];
+    // 省略時はdstのblobのsize
+    optional uint64 size = 6;
+}
+
 message GetBlobRefResponse {
-    reserved 1;
+    reserved 1, 3;
+    reserved "locations";
+
     required BlobInfo blob = 2;
-    repeated BlobLocation locations = 3;
+    repeated BlobSource sources = 4;
 }
 
 message PutBlobRefRequest {
@@ -29,6 +49,9 @@ message PutBlobRefRequest {
         // 任意の storage/address を指定できるこれは unsafe (将来的に storage からの証明を付ける)
         PutBlobRefWithNewBlobInfo unsafeNewBlob = 2;
         // PutBlobRefFromOtherRef fromOtherRef = 3;
+        PutBlobRefFromSlice from_blob_slice = 4;
+        PutBlobRefFromTransform from_blob_transform = 5;
+        PutBlobRefFromConcat from_blob_concat = 6;
     }
 }
 
@@ -49,3 +72,22 @@ message PutBlobRefWithNewBlobInfo {
 //     string key = 3;
 //     optional bytes expected_blob_id = 4; // 設定されていた場合、現在の値と一致しなかったらエラー (HTTP 409)
 // }
+
+message PutBlobRefFromSlice {
+    required PutBlobRefRequest source = 1;
+    required uint64 start = 2;
+    required uint64 size = 3;
+    required core.BlobHashes hashes = 4;
+}
+
+message PutBlobRefFromTransform {
+    required PutBlobRefRequest source = 1;
+    required transform.Transform transform = 2;
+    required uint64 size = 3;
+    required core.BlobHashes hashes = 4;
+}
+
+message PutBlobRefFromConcat {
+    repeated PutBlobRefRequest sources = 1;
+    required core.BlobHashes hashes = 3;
+}

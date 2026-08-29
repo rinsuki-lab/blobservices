@@ -20,3 +20,6 @@ http-body-util = "0.1.4"
 futures = "0.3.32"
 hex = "0.4.3"
 hyper-tls = { workspace = true }
+aes = "0.9.3"
+cbc = "0.2.1"
+flate2 = "1.1.10"
