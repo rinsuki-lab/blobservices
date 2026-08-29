@@ -18,8 +18,8 @@ message TransformShared {
 message TransformParameters {
     oneof transform {
         // raw deflate (not zlib/gzip)
-        Void deflate = 1;
-        TransformAesCbcParameters aes_cbc = 11;
+        Void dec_deflate = 1;
+        TransformAesCbcParameters dec_aes_cbc = 11;
     }
 }
 
