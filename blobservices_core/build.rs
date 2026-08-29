@@ -2,7 +2,11 @@ fn main() -> std::io::Result<()> {
     let descriptor_path =
         std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("proto_descriptor.bin");
 
-    let files = ["proto/manager.proto", "proto/storage.proto"];
+    let files = [
+        "proto/manager.proto",
+        "proto/storage.proto",
+        "proto/transform.proto",
+    ];
 
     for file in files {
         println!("cargo:rerun-if-changed={}", file);

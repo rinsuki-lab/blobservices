@@ -1,0 +1,55 @@
+syntax = "proto2";
+
+package blobservices.transform;
+
+// if `shared` exists, `params` and `shared.params` should be same type
+// if `shared` exists, they will be treated like: ` {...shared.params, ...params}`
+message Transform {
+    required TransformParameters params = 1;
+    optional TransformShared shared = 2;
+}
+
+message TransformShared {
+    required TransformParameters params = 1;
+    required string namespace = 2;
+    required string slug = 3;
+}
+
+message TransformParameters {
+    oneof transform {
+        // raw deflate (not zlib/gzip)
+        Void deflate = 1;
+        TransformAesCbcParameters aes_cbc = 11;
+    }
+}
+
+message Void {
+}
+
+message AesCbcPadding {
+    oneof padding {
+        // decrypted result will be raw 16-bytes
+        Void passthrough = 1;
+        Void pkcs7 = 2;
+        // could be empty, but reverse requires
+        bytes iso10126 = 5;
+    }
+}
+
+message TransformAesCbcParameters {
+    // required in final parameters
+    optional bytes key = 1;
+    // `iv` should be required if `iv_prepended` is false
+    optional bytes iv = 2;
+    optional bool iv_prepended = 3;
+    // required in final parameters
+    optional AesCbcPadding padding = 4;
+}
+
+message TransformRcloneCryptParameters {
+    // required in final parameters
+    optional string password = 1;
+    optional string password2 = 2;
+    // optional, but reverse requires
+    optional bytes file_nonce = 3;
+}
