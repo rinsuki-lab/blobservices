@@ -16,6 +16,16 @@ pub enum BytesRange {
     SuffixRange(u64),
 }
 
+impl std::fmt::Display for BytesRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BytesRange::IntRange(start, None) => write!(f, "bytes {}-", start),
+            BytesRange::IntRange(start, Some(end)) => write!(f, "bytes {}-{}", start, end),
+            BytesRange::SuffixRange(x) => write!(f, "bytes -{}", x),
+        }
+    }
+}
+
 impl BytesRange {
     /// None → invalid
     pub fn normalize(&self, entire_size: NonZeroU64) -> Option<ContentRange> {
