@@ -16,6 +16,7 @@ pub enum BytesRange {
     SuffixRange(u64),
 }
 
+#[derive(PartialEq)]
 pub struct NormalizedBytesRange {
     pub start: u64,
     pub end: u64,
@@ -79,4 +80,62 @@ pub fn bytes_range_specifier(input: &str) -> IResult<&str, BytesRange> {
         ows_rfc9110,
     ))
     .parse(input)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::num::NonZeroU64;
+
+    use super::{NormalizedBytesRange, bytes_range_specifier};
+
+    #[test]
+    fn normalizes_byte_ranges() {
+        let test_cases = [
+            (
+                "bytes=0-499",
+                1_000,
+                Some(NormalizedBytesRange { start: 0, end: 499 }),
+            ),
+            (
+                "bytes=500-999",
+                1_000,
+                Some(NormalizedBytesRange {
+                    start: 500,
+                    end: 999,
+                }),
+            ),
+            (
+                "bytes=500-10000",
+                1_000,
+                Some(NormalizedBytesRange {
+                    start: 500,
+                    end: 999,
+                }),
+            ),
+            (
+                "bytes=-500",
+                10_000,
+                Some(NormalizedBytesRange {
+                    start: 9_500,
+                    end: 9_999,
+                }),
+            ),
+            (
+                "bytes=9500-",
+                10_000,
+                Some(NormalizedBytesRange {
+                    start: 9_500,
+                    end: 9_999,
+                }),
+            ),
+            ("bytes=2-1", 1_000, None),
+        ];
+
+        for (input, entire_size, expected) in test_cases {
+            let (_, range) = bytes_range_specifier(input).expect("range should be parsed");
+            let normalized = range.normalize(NonZeroU64::new(entire_size).unwrap());
+
+            assert!(normalized == expected, "input: {input}");
+        }
+    }
 }
