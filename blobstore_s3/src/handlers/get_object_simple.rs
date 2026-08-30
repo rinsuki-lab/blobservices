@@ -1,4 +1,6 @@
-use blobstore_core::{Body, IntoResponse as _, Response};
+use blobservices_core::parsers::{http_content_range::ContentRange, http_range::BytesRange};
+use blobstore_core::{Body, IntoResponse as _, Response, provider::GetObjectSimpleResponse};
+use hyper::header;
 
 use crate::{provider::S3StoreProvider, utils::get_s3_url_with_key};
 use blobstore_core::StatusCode;
@@ -6,8 +8,9 @@ use blobstore_core::StatusCode;
 pub async fn get_object_simple(
     state: &S3StoreProvider,
     address: String,
-) -> Result<(u64, Body), Response> {
-    let req = if let Some(cdn_config) = &state.config.cdn {
+    range: Option<BytesRange>,
+) -> Result<GetObjectSimpleResponse, Response> {
+    let mut req = if let Some(cdn_config) = &state.config.cdn {
         let mut url = get_s3_url_with_key(&cdn_config.base_url, &address);
         if let Some(sign_config) = &cdn_config.private_key {
             sign_config.sign_to_url(&mut url);
@@ -28,6 +31,11 @@ pub async fn get_object_simple(
         state.sigv4_signer.sign(&mut req);
         req
     };
+
+    if let Some(range) = &range {
+        req.headers_mut()
+            .insert(header::RANGE, range.to_string().parse().unwrap());
+    }
 
     let res = state
         .client
@@ -77,5 +85,24 @@ pub async fn get_object_simple(
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         })?;
 
-    Ok((size, Body::from_stream(res.bytes_stream())))
+    let content_range = headers.get(header::CONTENT_RANGE)
+        .map(|x| x.to_str())
+        .transpose()
+        .map_err(|e| {
+            tracing::error!(err=?e, address=address, header=header::CONTENT_RANGE.as_str(), "S3_CRITICAL_HEADER_INVALID_STR");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        })?
+        .map(|x| ContentRange::parse(x))
+        .transpose()
+        .map_err(|e| {
+            tracing::error!(err=?e, address=address, header=header::CONTENT_RANGE.as_str(), "S3_CRITICAL_HEADER_PARSE_FAILED");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        })?
+        .map(|x| x.1);
+
+    Ok(GetObjectSimpleResponse {
+        size,
+        body: Body::from_stream(res.bytes_stream()),
+        content_range,
+    })
 }

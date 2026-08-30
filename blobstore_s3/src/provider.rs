@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use blobservices_core::utils::load_from_env_or_file_or_panic;
-use blobstore_core::{BlobProvider, Body, Response};
+use blobservices_core::{parsers::http_range::BytesRange, utils::load_from_env_or_file_or_panic};
+use blobstore_core::{BlobProvider, Body, Response, provider::GetObjectSimpleResponse};
 
 use crate::{config::Config, handlers, signer::SigV4Signer};
 
@@ -56,9 +56,9 @@ impl BlobProvider for S3StoreProvider {
     async fn get_object_simple(
         &self,
         address: String,
-        // TODO: range header?
-    ) -> Result<(u64, Body), Response> {
-        handlers::get_object_simple(self, address).await
+        range: Option<BytesRange>,
+    ) -> Result<GetObjectSimpleResponse, Response> {
+        handlers::get_object_simple(self, address, range).await
     }
 
     async fn get_object_hashes_fast(
