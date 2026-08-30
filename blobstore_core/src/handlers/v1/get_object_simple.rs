@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
 };
-use blobservices_core::parsers::http_range::bytes_range_specifier;
+use blobservices_core::parsers::http_range::BytesRange;
 
 use crate::{BlobProvider, state::AppState, utils::sanitize_address};
 
@@ -20,7 +20,7 @@ pub async fn get_object_simple<P: BlobProvider>(
     let range = headers
         .get(header::RANGE)
         .and_then(|x| x.to_str().ok())
-        .and_then(|x| bytes_range_specifier(x).ok())
+        .and_then(|x| BytesRange::parse(x).ok())
         .map(|x| x.1);
 
     let res = state.provider.get_object_simple(address, range).await?;

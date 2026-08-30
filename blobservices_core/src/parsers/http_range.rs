@@ -9,32 +9,11 @@ use nom::{
     sequence::{delimited, preceded, separated_pair},
 };
 
-use crate::parsers::rfc::ows_rfc9110;
+use crate::parsers::{http_content_range::ContentRange, rfc::ows_rfc9110};
 
 pub enum BytesRange {
     IntRange(u64, Option<u64>),
     SuffixRange(u64),
-}
-
-#[derive(PartialEq)]
-pub struct ContentRange {
-    pub start: u64,
-    pub end: u64,
-    pub entire_size: u64,
-}
-
-impl ContentRange {
-    pub fn size(&self) -> u64 {
-        (self.end - self.start) + 1
-    }
-}
-
-impl std::fmt::Display for ContentRange {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        assert!(self.start <= self.end);
-        assert!(self.end < self.entire_size);
-        write!(f, "bytes {}-{}/{}", self.start, self.end, self.entire_size)
-    }
 }
 
 impl BytesRange {
@@ -78,33 +57,33 @@ impl BytesRange {
             }
         }
     }
-}
 
-// https://www.rfc-editor.org/info/rfc9110/#section-14.1.1 の退化版
-// 複数range・bytes以外は対応しない
-pub fn bytes_range_specifier(input: &str) -> IResult<&str, BytesRange> {
-    all_consuming(delimited(
-        preceded(
-            tag_no_case("bytes"),
-            delimited(ows_rfc9110, tag("="), ows_rfc9110),
-        ),
-        alt((
-            // 1-2 とか 3-
-            separated_pair(u64, delimited(ows_rfc9110, tag("-"), ows_rfc9110), opt(u64))
-                .map(|x| BytesRange::IntRange(x.0, x.1)),
-            // -3- (最後から3byte)
-            preceded(tag("-"), u64).map(BytesRange::SuffixRange),
-        )),
-        ows_rfc9110,
-    ))
-    .parse(input)
+    // https://www.rfc-editor.org/info/rfc9110/#section-14.1.1 の退化版
+    // 複数range・bytes以外は対応しない
+    pub fn parse(input: &str) -> IResult<&str, BytesRange> {
+        all_consuming(delimited(
+            preceded(
+                tag_no_case("bytes"),
+                delimited(ows_rfc9110, tag("="), ows_rfc9110),
+            ),
+            alt((
+                // 1-2 とか 3-
+                separated_pair(u64, delimited(ows_rfc9110, tag("-"), ows_rfc9110), opt(u64))
+                    .map(|x| BytesRange::IntRange(x.0, x.1)),
+                // -3- (最後から3byte)
+                preceded(tag("-"), u64).map(BytesRange::SuffixRange),
+            )),
+            ows_rfc9110,
+        ))
+        .parse(input)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use std::num::NonZeroU64;
 
-    use super::{ContentRange, bytes_range_specifier};
+    use super::{BytesRange, ContentRange};
 
     #[test]
     fn normalizes_byte_ranges() {
@@ -158,7 +137,7 @@ mod tests {
         ];
 
         for (input, entire_size, expected) in test_cases {
-            let (_, range) = bytes_range_specifier(input).expect("range should be parsed");
+            let (_, range) = BytesRange::parse(input).expect("range should be parsed");
             let normalized = range.normalize(NonZeroU64::new(entire_size).unwrap());
 
             assert!(normalized == expected, "input: {input}");

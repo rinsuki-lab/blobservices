@@ -1,6 +1,6 @@
 use axum::{body::Body, response::Response};
 use blobservices_core::{
-    parsers::http_range::{BytesRange, ContentRange},
+    parsers::{http_content_range::ContentRange, http_range::BytesRange},
     proto,
 };
 
