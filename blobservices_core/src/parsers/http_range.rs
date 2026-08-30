@@ -17,30 +17,46 @@ pub enum BytesRange {
 }
 
 #[derive(PartialEq)]
-pub struct NormalizedBytesRange {
+pub struct ContentRange {
     pub start: u64,
     pub end: u64,
+    pub entire_size: u64,
+}
+
+impl ContentRange {
+    pub fn size(&self) -> u64 {
+        (self.end - self.start) + 1
+    }
+}
+
+impl std::fmt::Display for ContentRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        assert!(self.start <= self.end);
+        assert!(self.end < self.entire_size);
+        write!(f, "bytes {}-{}/{}", self.start, self.end, self.entire_size)
+    }
 }
 
 impl BytesRange {
     /// None → invalid
-    pub fn normalize(&self, entire_size: NonZeroU64) -> Option<NormalizedBytesRange> {
+    pub fn normalize(&self, entire_size: NonZeroU64) -> Option<ContentRange> {
         let entire_size = entire_size.into();
         match self {
             BytesRange::IntRange(start, end) => {
                 if *start >= entire_size {
                     return None;
                 }
-                if let Some(end) = end {
-                    if *end < *start {
-                        return None;
-                    }
+                if let Some(end) = end
+                    && *end < *start
+                {
+                    return None;
                 }
-                Some(NormalizedBytesRange {
+                Some(ContentRange {
                     start: *start,
                     end: end
                         .map(|x| min(x, entire_size - 1))
                         .unwrap_or(entire_size - 1),
+                    entire_size,
                 })
             }
             BytesRange::SuffixRange(start) => {
@@ -48,14 +64,16 @@ impl BytesRange {
                     return None;
                 }
                 if *start >= entire_size {
-                    return Some(NormalizedBytesRange {
+                    return Some(ContentRange {
                         start: 0,
                         end: entire_size - 1,
+                        entire_size,
                     });
                 }
-                Some(NormalizedBytesRange {
+                Some(ContentRange {
                     start: entire_size - start,
                     end: entire_size - 1,
+                    entire_size,
                 })
             }
         }
@@ -75,7 +93,7 @@ pub fn bytes_range_specifier(input: &str) -> IResult<&str, BytesRange> {
             separated_pair(u64, delimited(ows_rfc9110, tag("-"), ows_rfc9110), opt(u64))
                 .map(|x| BytesRange::IntRange(x.0, x.1)),
             // -3- (最後から3byte)
-            preceded(tag("-"), u64).map(|x| BytesRange::SuffixRange(x)),
+            preceded(tag("-"), u64).map(BytesRange::SuffixRange),
         )),
         ows_rfc9110,
     ))
@@ -86,7 +104,7 @@ pub fn bytes_range_specifier(input: &str) -> IResult<&str, BytesRange> {
 mod tests {
     use std::num::NonZeroU64;
 
-    use super::{NormalizedBytesRange, bytes_range_specifier};
+    use super::{ContentRange, bytes_range_specifier};
 
     #[test]
     fn normalizes_byte_ranges() {
@@ -94,38 +112,46 @@ mod tests {
             (
                 "bytes=0-499",
                 1_000,
-                Some(NormalizedBytesRange { start: 0, end: 499 }),
+                Some(ContentRange {
+                    start: 0,
+                    end: 499,
+                    entire_size: 1000,
+                }),
             ),
             (
                 "bytes=500-999",
                 1_000,
-                Some(NormalizedBytesRange {
+                Some(ContentRange {
                     start: 500,
                     end: 999,
+                    entire_size: 1000,
                 }),
             ),
             (
                 "bytes=500-10000",
                 1_000,
-                Some(NormalizedBytesRange {
+                Some(ContentRange {
                     start: 500,
                     end: 999,
+                    entire_size: 1000,
                 }),
             ),
             (
                 "bytes=-500",
                 10_000,
-                Some(NormalizedBytesRange {
+                Some(ContentRange {
                     start: 9_500,
                     end: 9_999,
+                    entire_size: 10000,
                 }),
             ),
             (
                 "bytes=9500-",
                 10_000,
-                Some(NormalizedBytesRange {
+                Some(ContentRange {
                     start: 9_500,
                     end: 9_999,
+                    entire_size: 10000,
                 }),
             ),
             ("bytes=2-1", 1_000, None),

@@ -4,7 +4,7 @@ use axum::{
 };
 
 mod handlers;
-mod provider;
+pub mod provider;
 mod state;
 mod utils;
 pub use provider::BlobProvider;

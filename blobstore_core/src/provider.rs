@@ -1,7 +1,16 @@
 use axum::{body::Body, response::Response};
-use blobservices_core::proto;
+use blobservices_core::{
+    parsers::http_range::{BytesRange, ContentRange},
+    proto,
+};
 
 use crate::state::AppState;
+
+pub struct GetObjectSimpleResponse {
+    pub size: u64,
+    pub body: Body,
+    pub content_range: Option<ContentRange>,
+}
 
 pub trait BlobProvider: Send + Sync + Sized {
     fn env_prefix() -> &'static str {
@@ -16,8 +25,8 @@ pub trait BlobProvider: Send + Sync + Sized {
     fn get_object_simple(
         &self,
         address: String,
-        // TODO: range header?
-    ) -> impl Future<Output = Result<(u64, Body), Response>> + Send;
+        range: Option<BytesRange>,
+    ) -> impl Future<Output = Result<GetObjectSimpleResponse, Response>> + Send;
 
     /// blob本体を読まずに得られるハッシュのみを返す
     fn get_object_hashes_fast(

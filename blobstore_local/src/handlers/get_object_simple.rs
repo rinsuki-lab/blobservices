@@ -1,11 +1,16 @@
-use std::io::ErrorKind;
+use std::{io::ErrorKind, num::NonZeroU64};
 
 use axum::{
     body::Body,
-    http::StatusCode,
+    http::{StatusCode, header},
     response::{IntoResponse, Response},
 };
-use tokio::{fs::File, io::AsyncSeekExt};
+use blobservices_core::parsers::http_range::BytesRange;
+use blobstore_core::provider::GetObjectSimpleResponse;
+use tokio::{
+    fs::File,
+    io::{AsyncReadExt, AsyncSeekExt},
+};
 use tokio_util::io::ReaderStream;
 
 use crate::provider::LocalStoreProvider;
@@ -13,7 +18,8 @@ use crate::provider::LocalStoreProvider;
 pub async fn get_object_simple(
     state: &LocalStoreProvider,
     address: String,
-) -> Result<(u64, Body), Response> {
+    range: Option<BytesRange>,
+) -> Result<GetObjectSimpleResponse, Response> {
     let mut path = state.done_dir.clone();
     path.push(address);
 
@@ -31,10 +37,44 @@ pub async fn get_object_simple(
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     })?;
 
-    file.seek(std::io::SeekFrom::Start(0)).await.map_err(|e| {
-        tracing::error!(err=?e, "FAILED_TO_SEEK_START");
-        StatusCode::INTERNAL_SERVER_ERROR.into_response()
-    })?;
+    let size = match NonZeroU64::new(size) {
+        Some(x) => x,
+        None => {
+            // its empty
+            return Ok(GetObjectSimpleResponse {
+                size,
+                body: Body::empty(),
+                content_range: None,
+            });
+        }
+    };
 
-    Ok((size, Body::from_stream(ReaderStream::new(file))))
+    let range = match range {
+        Some(x) => Some(x.normalize(size).ok_or_else(|| {
+            Response::builder()
+                .status(StatusCode::RANGE_NOT_SATISFIABLE)
+                .header(header::CONTENT_RANGE, format!("bytes */{}", size))
+                .body(Body::empty())
+                .unwrap()
+        })?),
+        None => None,
+    };
+
+    let (start, size) = range
+        .as_ref()
+        .map(|x| (x.start, x.size()))
+        .unwrap_or((0, size.into()));
+
+    file.seek(std::io::SeekFrom::Start(start))
+        .await
+        .map_err(|e| {
+            tracing::error!(err=?e, "FAILED_TO_SEEK_START");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        })?;
+
+    Ok(GetObjectSimpleResponse {
+        size,
+        body: Body::from_stream(ReaderStream::new(file.take(size))),
+        content_range: range,
+    })
 }

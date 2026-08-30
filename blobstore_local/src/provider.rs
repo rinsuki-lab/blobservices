@@ -1,6 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
-use axum::body::Body;
+use blobservices_core::parsers::http_range::BytesRange;
+use blobstore_core::provider::GetObjectSimpleResponse;
 
 use crate::handlers;
 
@@ -45,9 +46,9 @@ impl blobstore_core::BlobProvider for LocalStoreProvider {
     async fn get_object_simple(
         &self,
         address: String,
-        // TODO: range header?
-    ) -> Result<(u64, Body), axum::response::Response> {
-        handlers::get_object_simple(self, address).await
+        range: Option<BytesRange>,
+    ) -> Result<GetObjectSimpleResponse, axum::response::Response> {
+        handlers::get_object_simple(self, address, range).await
     }
 
     async fn get_object_hashes_fast(
