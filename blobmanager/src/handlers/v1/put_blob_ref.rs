@@ -35,6 +35,15 @@ pub async fn put_blob_ref(
                 StatusCode::BAD_REQUEST.into_response()
             })?
         }
+        proto::manager::put_blob_ref_request::Content::FromBlobSlice(put_blob_ref_from_slice) => {
+            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
+        }
+        proto::manager::put_blob_ref_request::Content::FromBlobTransform(
+            put_blob_ref_from_transform,
+        ) => return Err(StatusCode::NOT_IMPLEMENTED.into_response()),
+        proto::manager::put_blob_ref_request::Content::FromBlobConcat(put_blob_ref_from_concat) => {
+            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
+        }
     };
     tx.commit().await.map_err(|e| {
         tracing::error!(err=?e, "FAILED_TO_COMMIT_BLOB_TX");

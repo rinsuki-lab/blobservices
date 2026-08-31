@@ -65,13 +65,20 @@ pub async fn get_blob_ref(
                 blake2sp: res.cs_blake2sp,
             },
         },
-        locations: locations
-            .into_iter()
-            .map(|l| proto::manager::BlobLocation {
-                address: l.address,
-                storage: l.storage_id,
-            })
-            .collect(),
+        sources: vec![proto::manager::BlobSource {
+            location: locations
+                .into_iter()
+                .map(|l| proto::manager::BlobLocation {
+                    address: l.address,
+                    storage: l.storage_id,
+                })
+                .collect(),
+            parent: Vec::new(),
+            transform: None,
+            src_start: None,
+            dst_start: None,
+            size: None,
+        }],
     };
 
     response_format.message_to_response(res)
