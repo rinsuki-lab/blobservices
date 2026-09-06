@@ -76,6 +76,26 @@ struct BlobSourceFinder<'a> {
 }
 
 impl BlobSourceFinder<'_> {
+    async fn resolve_location(
+        &self,
+        blob_id: uuid::Uuid,
+    ) -> Result<Vec<proto::manager::BlobLocation>, Response> {
+        let res = sqlx::query!("SELECT * FROM blob_locations WHERE blob_id = $1", &blob_id)
+            .fetch_all(self.db_pool)
+            .await
+            .map_err(|e| {
+                tracing::error!(err=?e, "FAILED_TO_QUERY_LOCATIONS");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            })?
+            .into_iter()
+            .map(|l| proto::manager::BlobLocation {
+                address: l.address,
+                storage: l.storage_id,
+            })
+            .collect();
+        Ok(res)
+    }
+
     async fn resolve_blob(
         &self,
         blob_id: uuid::Uuid,
@@ -83,31 +103,15 @@ impl BlobSourceFinder<'_> {
         let mut sources = Vec::new();
 
         // if there are any locations, just put them
-        let locations = sqlx::query!("SELECT * FROM blob_locations WHERE blob_id = $1", &blob_id)
-            .fetch_all(self.db_pool)
-            .await
-            .map_err(|e| {
-                tracing::error!(err=?e, "FAILED_TO_QUERY_LOCATIONS");
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            })?;
-
+        let locations = self.resolve_location(blob_id).await?;
         if !locations.is_empty() {
             sources.push(proto::manager::BlobSource {
-                location: locations
-                    .into_iter()
-                    .map(|l| proto::manager::BlobLocation {
-                        address: l.address,
-                        storage: l.storage_id,
-                    })
-                    .collect(),
+                location: locations,
                 parent: Vec::new(),
                 transform: None,
-                src_start: None,
-                dst_start: None,
-                size: None,
+                slice: None,
             });
         }
-
         Ok(sources)
     }
 }

@@ -102,10 +102,7 @@ pub async fn get_blob_content_by_ref(
             .iter()
             .filter(|source| {
                 // 非対応なものが付いていたら無視
-                source.transform.is_none()
-                    && source.src_start.is_none()
-                    && source.dst_start.is_none()
-                    && source.size.is_none()
+                source.transform.is_none() && source.slice.is_none()
             })
             .flat_map(|source| source.location.iter())
             .filter_map(|location| {

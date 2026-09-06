@@ -22,16 +22,21 @@ message BlobSourceTransform {
     required bool is_reverse = 2;
 }
 
+message BlobSourceSlice {
+    reserved 1;
+    optional uint64 src_start = 2 [ default = 0 ];
+    optional uint64 dst_start = 3 [ default = 0 ];
+    // 省略時はdstのblobのsize
+    optional uint64 size = 4;
+}
+
+// (location or parent) | transform | slice > result
 message BlobSource {
     repeated BlobLocation location = 1;
     repeated BlobSource parent = 2;
 
     optional BlobSourceTransform transform = 3;
-
-    optional uint64 src_start = 4 [ default = 0 ];
-    optional uint64 dst_start = 5 [ default = 0 ];
-    // 省略時はdstのblobのsize
-    optional uint64 size = 6;
+    optional BlobSourceSlice slice = 4;
 }
 
 message GetBlobRefResponse {
