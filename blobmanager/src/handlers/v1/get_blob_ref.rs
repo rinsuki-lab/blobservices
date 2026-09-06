@@ -36,15 +36,15 @@ pub async fn get_blob_ref(
         }
     };
 
-    let locations = sqlx::query!("SELECT * FROM blob_locations WHERE blob_id = $1", &res.id)
-        .fetch_all(&state.db_pool)
-        .await;
-    let locations = match locations {
-        Ok(l) => l,
-        Err(e) => {
-            tracing::error!(err=?e, "FAILED_TO_QUERY_LOCATIONS");
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-        }
+    let sources = BlobSourceFinder {
+        db_pool: &state.db_pool,
+    }
+    .resolve_blob(res.id)
+    .await;
+
+    let sources = match sources {
+        Ok(s) => s,
+        Err(r) => return r,
     };
 
     let res = proto::manager::GetBlobRefResponse {
@@ -65,21 +65,49 @@ pub async fn get_blob_ref(
                 blake2sp: res.cs_blake2sp,
             },
         },
-        sources: vec![proto::manager::BlobSource {
-            location: locations
-                .into_iter()
-                .map(|l| proto::manager::BlobLocation {
-                    address: l.address,
-                    storage: l.storage_id,
-                })
-                .collect(),
-            parent: Vec::new(),
-            transform: None,
-            src_start: None,
-            dst_start: None,
-            size: None,
-        }],
+        sources,
     };
 
     response_format.message_to_response(res)
+}
+
+struct BlobSourceFinder<'a> {
+    db_pool: &'a sqlx::Pool<sqlx::Postgres>,
+}
+
+impl BlobSourceFinder<'_> {
+    async fn resolve_blob(
+        &self,
+        blob_id: uuid::Uuid,
+    ) -> Result<Vec<proto::manager::BlobSource>, Response> {
+        let mut sources = Vec::new();
+
+        // if there are any locations, just put them
+        let locations = sqlx::query!("SELECT * FROM blob_locations WHERE blob_id = $1", &blob_id)
+            .fetch_all(self.db_pool)
+            .await
+            .map_err(|e| {
+                tracing::error!(err=?e, "FAILED_TO_QUERY_LOCATIONS");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            })?;
+
+        if !locations.is_empty() {
+            sources.push(proto::manager::BlobSource {
+                location: locations
+                    .into_iter()
+                    .map(|l| proto::manager::BlobLocation {
+                        address: l.address,
+                        storage: l.storage_id,
+                    })
+                    .collect(),
+                parent: Vec::new(),
+                transform: None,
+                src_start: None,
+                dst_start: None,
+                size: None,
+            });
+        }
+
+        Ok(sources)
+    }
 }
