@@ -98,13 +98,9 @@ pub async fn get_blob_content_by_ref(
             &proto::manager::BlobLocation,
             &crate::config::StoreServerConfig,
         )> = info
-            .sources
+            .locations
             .iter()
-            .filter(|source| {
-                // 非対応なものが付いていたら無視
-                source.transform.is_none() && source.slice.is_none()
-            })
-            .flat_map(|source| source.location.iter())
+            .filter(|source| source.blob_id == info.blob.id)
             .filter_map(|location| {
                 let location_config = &state.config.stores.get(&location.storage)?;
                 if !location_config.can_read {
