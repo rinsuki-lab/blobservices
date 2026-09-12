@@ -109,7 +109,7 @@ impl AesCbc {
             }
         }
 
-        todo!()
+        Ok(AesCbc {}) // todo
     }
 
     pub fn new_straight(
@@ -118,7 +118,7 @@ impl AesCbc {
         dst_size: u64,
     ) -> Result<DecAesCbc, TransformCreationError> {
         let shared = Self::new_shared(config, src_size, dst_size)?;
-        todo!()
+        Ok(DecAesCbc {}) // todo
     }
 
     pub fn new_reversed(
@@ -129,6 +129,6 @@ impl AesCbc {
         let shared = Self::new_shared(config, src_size, dst_size)?;
         // TODO: deny if iv is empty (even iv_prepended is true)
         // TODO: deny if iso10126 padding but padding bytes are empty
-        todo!()
+        Ok(EncAesCbc {}) // todo
     }
 }
