@@ -1,0 +1,12 @@
+[package]
+name = "blobmanager_client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+blobservices_core = { workspace = true }
+tracing = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
+prost = { workspace = true }
+serde = { workspace = true }

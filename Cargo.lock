@@ -181,6 +181,7 @@ version = "0.1.0"
 dependencies = [
  "aes",
  "axum",
+ "blobmanager_client",
  "blobservices_core",
  "cbc",
  "flate2",
@@ -212,6 +213,18 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "blobmanager_client"
+version = "0.1.0"
+dependencies = [
+ "blobservices_core",
+ "prost",
+ "reqwest",
+ "serde",
+ "tracing",
+ "url",
 ]
 
 [[package]]

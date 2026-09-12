@@ -5,7 +5,7 @@ members = [
     "blobservices_core",
     "blobmanager",
     "blobstore_local",
-    "blobgateway", "blobstore_core", "blobstore_s3",
+    "blobgateway", "blobstore_core", "blobstore_s3", "blobmanager_client",
 ]
 
 [workspace.dependencies]
@@ -25,3 +25,4 @@ url = { version = "2.5.8", features = ["serde"] }
 
 blobservices_core = { path = "./blobservices_core" }
 blobstore_core = { path = "./blobstore_core" }
+blobmanager_client = { path = "./blobmanager_client" }

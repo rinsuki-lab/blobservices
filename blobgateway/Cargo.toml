@@ -23,3 +23,5 @@ hyper-tls = { workspace = true }
 aes = "0.9.3"
 cbc = "0.2.1"
 flate2 = "1.1.10"
+
+blobmanager_client = { workspace = true }
