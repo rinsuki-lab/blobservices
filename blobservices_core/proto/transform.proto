@@ -31,7 +31,7 @@ message AesCbcPadding {
         // decrypted result will be raw 16-bytes
         Void passthrough = 1;
         Void pkcs7 = 2;
-        // could be empty, but reverse requires
+        // could be empty, but reverse requires. should include last (padding size) bytes (so 1 <= length <= 16)
         bytes iso10126 = 5;
     }
 }
