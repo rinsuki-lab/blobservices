@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM blob_locations WHERE blob_id = $1",
+  "query": "SELECT * FROM blob_locations WHERE blob_id = ANY($1) ORDER BY blob_id ASC",
   "describe": {
     "columns": [
       {
@@ -61,7 +61,7 @@
     ],
     "parameters": {
       "Left": [
-        "Uuid"
+        "UuidArray"
       ]
     },
     "nullable": [
@@ -72,5 +72,5 @@
       true
     ]
   },
-  "hash": "af0458caf37c7952c55ebeb492e30e21a5f84bb714f2b3c8d10840175f43d5e0"
+  "hash": "313508064ef3b650eda4671e9d1fbb9e4f4e1a84182ee3a734306d2220047fec"
 }
