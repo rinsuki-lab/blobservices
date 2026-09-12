@@ -12,3 +12,4 @@ sqlx = { workspace = true }
 serde = { workspace = true }
 uuid = { workspace = true }
 prost = "0.14.4"
+serde_json = { workspace = true }
