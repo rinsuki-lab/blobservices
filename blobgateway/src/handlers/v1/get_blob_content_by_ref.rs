@@ -5,7 +5,6 @@ use axum::{
 };
 use blobservices_core::proto;
 use hyper::header;
-use prost::Message as _;
 use reqwest::StatusCode;
 
 use crate::{NamespaceAndKey, state::AppState};
@@ -14,38 +13,17 @@ async fn get_current_blob_info_by_ref(
     state: &AppState,
     nk: &NamespaceAndKey,
 ) -> Result<proto::manager::GetBlobRefResponse, Response> {
-    let mut res = state.config.manager.url.clone();
-    res.path_segments_mut()
-        .unwrap()
-        .push("v1")
-        .push("refs")
-        .push(&nk.namespace)
-        .push(&nk.key);
-    let res = state
-        .client
-        .get(res)
-        .header("Accept", "application/protobuf")
-        .send()
+    state
+        .manager_client
+        .get_blob_ref(&nk.namespace, &nk.key)
         .await
-        .map_err(|e| {
-            tracing::error!(err=?e, "FAILED_TO_GET_REF_INFO_HEADER");
-            StatusCode::INTERNAL_SERVER_ERROR.into_response()
-        })?;
-    if !res.status().is_success() {
-        return Err(StatusCode::from_u16(res.status().as_u16())
-            .unwrap()
-            .into_response());
-    }
-
-    let res = res.bytes().await.map_err(|e| {
-        tracing::error!(err=?e, "FAILED_TO_GET_REF_INFO_BODY");
-        StatusCode::INTERNAL_SERVER_ERROR.into_response()
-    })?;
-
-    proto::manager::GetBlobRefResponse::decode(res).map_err(|e| {
-        tracing::error!(err=?e, "FAILED_TO_GET_REF_INFO_DECODE");
-        StatusCode::INTERNAL_SERVER_ERROR.into_response()
-    })
+        .map_err(|e| match e {
+            blobmanager_client::Error::Status(status) => status.into_response(),
+            e => {
+                tracing::error!(err=?e, "FAILED_TO_GET_REF_INFO");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            }
+        })
 }
 
 fn build_response_from_blob_info(

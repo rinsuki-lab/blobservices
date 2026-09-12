@@ -52,19 +52,12 @@ pub async fn put_blob_content_by_ref(
         return Err(StatusCode::SERVICE_UNAVAILABLE.into_response());
     };
 
-    let mut req = state.config.manager.url.clone();
-    req.path_segments_mut()
-        .unwrap()
-        .push("v1")
-        .push("refs")
-        .push(&nk.namespace)
-        .push(&nk.key);
-    let res = state
-        .client
-        .put(req)
-        .header("Content-Type", "application/protobuf")
-        .body(
-            proto::manager::PutBlobRefRequest {
+    state
+        .manager_client
+        .put_blob_ref(
+            &nk.namespace,
+            &nk.key,
+            &proto::manager::PutBlobRefRequest {
                 content: Some(
                     proto::manager::put_blob_ref_request::Content::UnsafeNewBlob(
                         proto::manager::PutBlobRefWithNewBlobInfo {
@@ -75,22 +68,18 @@ pub async fn put_blob_content_by_ref(
                         },
                     ),
                 ),
-            }
-            .encode_to_vec(),
+            },
         )
-        .send()
         .await
         .map_err(|e| {
-            tracing::warn!(err=?e, "FAILED_TO_REGISTER_BLOB_HTTP");
+            match e {
+                blobmanager_client::Error::Status(status) => {
+                    tracing::warn!(status = status.as_u16(), "FAILED_TO_REGISTER_BLOB_STATUS");
+                }
+                e => tracing::warn!(err=?e, "FAILED_TO_REGISTER_BLOB_HTTP"),
+            }
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         })?;
-    if !res.status().is_success() {
-        tracing::warn!(
-            status = res.status().as_u16(),
-            "FAILED_TO_REGISTER_BLOB_STATUS"
-        );
-        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
-    }
 
     Ok(())
 }
