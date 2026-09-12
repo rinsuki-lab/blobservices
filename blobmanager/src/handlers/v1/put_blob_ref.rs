@@ -18,33 +18,8 @@ pub async fn put_blob_ref(
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     })?;
 
-    let content = body.content.ok_or_else(|| {
-        tracing::info!("MISSING_CONTENT");
-        StatusCode::BAD_REQUEST.into_response()
-    })?;
+    let blob_id = make_blob_from_content(&mut tx, body).await?;
 
-    let blob_id = match content {
-        proto::manager::put_blob_ref_request::Content::UnsafeNewBlob(new_blob) => {
-            let blob_id = insert_new_blob(&mut tx, new_blob.size, new_blob.hashes).await?;
-            insert_new_location(&mut tx, blob_id, &new_blob.storage, &new_blob.address).await?;
-            blob_id
-        }
-        proto::manager::put_blob_ref_request::Content::UnsafeSetBlobId(blob_id) => {
-            blob_id.blob_id.try_into().map_err(|e| {
-                tracing::info!(err=?e, "FAILED_TO_PARSE_AS_UUID");
-                StatusCode::BAD_REQUEST.into_response()
-            })?
-        }
-        proto::manager::put_blob_ref_request::Content::FromBlobSlice(put_blob_ref_from_slice) => {
-            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
-        }
-        proto::manager::put_blob_ref_request::Content::FromBlobTransform(
-            put_blob_ref_from_transform,
-        ) => return Err(StatusCode::NOT_IMPLEMENTED.into_response()),
-        proto::manager::put_blob_ref_request::Content::FromBlobConcat(put_blob_ref_from_concat) => {
-            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
-        }
-    };
     tx.commit().await.map_err(|e| {
         tracing::error!(err=?e, "FAILED_TO_COMMIT_BLOB_TX");
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
@@ -101,6 +76,91 @@ pub async fn put_blob_ref(
     })?;
 
     Ok(StatusCode::CREATED.into_response())
+}
+
+async fn make_blob_from_content(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    request: proto::manager::PutBlobRefRequest,
+) -> Result<Uuid, Response> {
+    let content = request.content.ok_or_else(|| {
+        tracing::info!("MISSING_CONTENT");
+        StatusCode::BAD_REQUEST.into_response()
+    })?;
+    Ok(match content {
+        proto::manager::put_blob_ref_request::Content::UnsafeSetBlobId(recipe) => {
+            recipe.blob_id.try_into().unwrap()
+        }
+        proto::manager::put_blob_ref_request::Content::UnsafeNewBlob(recipe) => {
+            // TODO: 既にlocationが使われているかを確認し、使われていたらそのlocationが使われているblobと{size,hashes}が被るかを確認する
+            let blob_id = insert_new_blob(tx, recipe.size, recipe.hashes).await?;
+            insert_new_location(tx, blob_id, &recipe.storage, &recipe.address).await?;
+            blob_id
+        }
+        proto::manager::put_blob_ref_request::Content::FromBlobSlice(recipe) => {
+            let parent_id = Box::pin(make_blob_from_content(tx, *recipe.source)).await?;
+
+            let res = sqlx::query!(
+                "SELECT dst_blob_id FROM blob_slices JOIN blobs dst ON dst.id = blob_slices.dst_blob_id WHERE src_blob_id = $1 AND start = $2 AND dst.size = $3",
+                parent_id,
+                recipe.start as i64,
+                recipe.size as i64
+            )
+            .fetch_optional(&mut **tx)
+            .await
+            .map_err(|e| {
+                tracing::error!(err=?e, "FAILED_TO_FIND_SLICE");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            })?;
+
+            if let Some(res) = res {
+                check_current_blob(tx, res.dst_blob_id, recipe.size, recipe.hashes).await?;
+                res.dst_blob_id
+            } else {
+                let parent_size =
+                    sqlx::query!("SELECT size FROM blobs WHERE id = $1 LIMIT 1", parent_id)
+                        .fetch_one(&mut **tx)
+                        .await
+                        .map_err(|e| {
+                            tracing::error!(err=?e, "FAILED_TO_QUERY_PARENT");
+                            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                        })?
+                        .size as u64;
+                let recipe_end = recipe.start.checked_add(recipe.size).ok_or_else(|| {
+                    tracing::warn!(recipe.start, recipe.size, "RECIPE_TOO_BIG");
+                    StatusCode::BAD_REQUEST.into_response()
+                })?;
+                if recipe_end > parent_size {
+                    tracing::warn!(recipe_end, parent_size, "RECIPE_OVERRUN");
+                    return Err(StatusCode::BAD_REQUEST.into_response());
+                }
+
+                let blob_id = insert_new_blob(tx, recipe.size, recipe.hashes).await?;
+
+                sqlx::query!(
+                    "INSERT INTO blob_slices(src_blob_id, dst_blob_id, start) VALUES($1, $2, $3)",
+                    parent_id,
+                    blob_id,
+                    recipe.start as i64
+                )
+                .execute(&mut **tx)
+                .await
+                .map_err(|e| {
+                    tracing::error!(err=?e, "FAILED_TO_INSERT_SLICE");
+                    StatusCode::INTERNAL_SERVER_ERROR.into_response()
+                })?;
+
+                blob_id
+            }
+        }
+        proto::manager::put_blob_ref_request::Content::FromBlobTransform(_recipe) => {
+            // TODO: 実装
+            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
+        }
+        proto::manager::put_blob_ref_request::Content::FromBlobConcat(_recipe) => {
+            // TODO: 実装
+            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
+        }
+    })
 }
 
 async fn insert_new_blob(
@@ -170,4 +230,28 @@ async fn insert_new_location(
         StatusCode::INTERNAL_SERVER_ERROR.into_response()
     })
     .map(|r| r.id)
+}
+
+async fn check_current_blob(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    id: Uuid,
+    size: u64,
+    hashes: proto::core::BlobHashes,
+) -> Result<(), Response> {
+    let res = sqlx::query!("SELECT * FROM blobs WHERE id = $1", id)
+        .fetch_one(&mut **tx)
+        .await
+        .map_err(|e| {
+            tracing::error!(err=?e, id=%id, "FAILED_TO_FIND_BLOB");
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        })?;
+
+    if res.size != (size as i64) {
+        tracing::error!(blob=%res.id, expected=size, "WRONG_SIZE");
+        return Err(StatusCode::BAD_REQUEST.into_response());
+    }
+
+    // TODO: hashes を検証する
+
+    Ok(())
 }
