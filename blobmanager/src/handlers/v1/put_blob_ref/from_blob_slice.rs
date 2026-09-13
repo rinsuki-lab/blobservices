@@ -34,14 +34,7 @@ pub(super) async fn from_blob_slice(
         check_current_blob(tx, res.dst_blob_id, recipe.size, recipe.hashes).await?;
         Ok(res.dst_blob_id)
     } else {
-        let parent_size = sqlx::query!("SELECT size FROM blobs WHERE id = $1 LIMIT 1", parent_id)
-            .fetch_one(&mut **tx)
-            .await
-            .map_err(|e| {
-                tracing::error!(err=?e, "FAILED_TO_QUERY_PARENT");
-                StatusCode::INTERNAL_SERVER_ERROR.into_response()
-            })?
-            .size as u64;
+        let parent_size = super::shared::get_blob_size(tx, &parent_id).await?;
         let recipe_end = recipe.start.checked_add(recipe.size).ok_or_else(|| {
             tracing::warn!(recipe.start, recipe.size, "RECIPE_TOO_BIG");
             StatusCode::BAD_REQUEST.into_response()

@@ -97,3 +97,19 @@ pub(super) async fn check_current_blob(
 
     Ok(())
 }
+
+pub async fn get_blob_size(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    id: &Uuid,
+) -> Result<u64, Response> {
+    Ok(
+        sqlx::query!("SELECT size FROM blobs WHERE id = $1 LIMIT 1", id)
+            .fetch_one(&mut **tx)
+            .await
+            .map_err(|e| {
+                tracing::error!(err=?e, "FAILED_TO_QUERY_PARENT");
+                StatusCode::INTERNAL_SERVER_ERROR.into_response()
+            })?
+            .size as u64,
+    )
+}
