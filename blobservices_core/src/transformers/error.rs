@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub enum TransformCreationError {
     WrongParameter {
         key: &'static str,
@@ -7,4 +8,5 @@ pub enum TransformCreationError {
         reason: &'static str,
     },
     NotReversible,
+    NotImplemented,
 }
