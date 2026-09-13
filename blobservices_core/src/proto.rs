@@ -16,4 +16,6 @@ pub mod storage {
 pub mod transform {
     include!(concat!(env!("OUT_DIR"), "/blobservices.transform.rs"));
     include!(concat!(env!("OUT_DIR"), "/blobservices.transform.serde.rs"));
+
+    include!(concat!(env!("OUT_DIR"), "/blobservices.transform.tags.rs"));
 }
