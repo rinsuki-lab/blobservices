@@ -7,6 +7,7 @@ use tokio::net::TcpListener;
 mod extractors;
 mod handlers;
 mod state;
+mod utils;
 
 #[derive(serde::Deserialize, std::fmt::Debug)]
 struct NamespaceAndKey {
