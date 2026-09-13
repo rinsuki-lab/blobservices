@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT blob_transform_shared_parameters.*\n        FROM blob_transform_shared_parameter_alias\n        INNER JOIN blob_transform_shared_parameters ON blob_transform_shared_parameters.id = parameter_id\n        WHERE namespace = $1 AND slug = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "blob_transform_shared_parameters",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "transform_type",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "blob_transform_shared_parameters",
+            "name": "transform_type"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "parameters",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "blob_transform_shared_parameters",
+            "name": "parameters"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3ebc26ec9d79e52d1efb16d09b590b218a9d46f4264f6f650cbe8335fcf38628"
+}

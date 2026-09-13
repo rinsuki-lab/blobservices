@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO blob_transform_shared_parameter_alias (id, namespace, slug, parameter_id) VALUES (gen_random_uuid(), $1, $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "a0ada67d01d308ed668e09d50c8f49980caf7d9c80e790fc85e1af052c06fa85"
+}

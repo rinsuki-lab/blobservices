@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO blob_transforms (\n            id,\n            src_blob_id,\n            dst_blob_id,\n            transform_type,\n            is_reversible,\n            shared_parameter_id,\n            parameters\n        ) VALUES(gen_random_uuid(), $1, $2, $3, $4, $5, $6)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Int4",
+        "Bool",
+        "Uuid",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7508d0e724215604750bf31cc62431a35f3a8ce56bb9564723db99898cfccd03"
+}
