@@ -53,9 +53,9 @@ message GetBlobRefResponse {
 message PutBlobRefRequest {
     oneof content {
         // 将来的に namespace/key でアクセス制御をかける予定なので、それをバイパスしてblobを直指定できるこれは unsafe
-        PutBlobRefWithBlobId unsafeSetBlobId = 1;
+        PutBlobRefWithBlobId unsafe_set_blob_id = 1;
         // 任意の storage/address を指定できるこれは unsafe (将来的に storage からの証明を付ける)
-        PutBlobRefWithNewBlobInfo unsafeNewBlob = 2;
+        PutBlobRefWithNewBlobInfo unsafe_new_blob = 2;
         // PutBlobRefFromOtherRef fromOtherRef = 3;
         PutBlobRefFromSlice from_blob_slice = 4;
         PutBlobRefFromTransform from_blob_transform = 5;
