@@ -15,6 +15,7 @@ jobs:
         env:
           POSTGRES_PASSWORD: test
     strategy:
+      fail-fast: false
       matrix:
         rust:
           - 1.96.0
