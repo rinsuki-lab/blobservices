@@ -29,7 +29,15 @@ jobs:
       - run: go install github.com/pgplex/pgschema@v1.12.0
       - run: brew update && brew install sqlx-cli
       - run: rustup default ${{ matrix.rust }} && rustup component add rustfmt clippy && cargo fmt --check
-      - run: pnpm install --frozen
+
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@c9883cc79df532ad1a7b81bf9ab944ceb090d65c # v2.0.0
+        with:
+          runtime: node@26
+          cache: true
+    - run: pnpm install --frozen
+      id: install-node-deps
+      background: true
     - name: Init Database
       run: |
         psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
@@ -63,4 +71,5 @@ jobs:
       env:
         BLOBGATEWAY_CONFIG_FILE: .github/ci-files/blobgateway.config.json
       background: true
+    - wait: install-node-deps
     - run: pnpm test
