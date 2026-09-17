@@ -1,13 +1,7 @@
 import { expect, test } from "@playwright/test"
 import { create, toJson } from "@bufbuild/protobuf"
 import { PutBlobRefRequestSchema } from "./gen/manager_pb"
-
-const URLS = {
-    blobgateway: "http://localhost:3003",
-    blobmanager: "http://localhost:3001",
-}
-
-const namespace = `blobservices_test_${crypto.randomUUID()}`
+import { namespace, URLS } from "./shared"
 
 test("simple upload & download", async ({request}) => {
     const data = "hello, world!"
