@@ -14,6 +14,11 @@ jobs:
         - 5432:5432
         env:
           POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 1s
+          --health-timeout 5s
+          --health-retries 60
     strategy:
       matrix:
         rust:
@@ -75,6 +80,18 @@ jobs:
         BLOBGATEWAY_CONFIG_FILE: .github/ci-files/blobgateway.config.json
       background: true
     - wait: install-node-deps
+    - name: Wait for daemons to listen
+      shell: bash
+      run: |
+        for daemon in blobmanager:3001 blobstore_local:3002 blobgateway:3003; do
+          name=${daemon%:*}
+          port=${daemon##*:}
+          echo "Waiting for $name on port $port"
+          if ! timeout 60s bash -c 'until curl --silent --output /dev/null --max-time 1 "http://127.0.0.1:$1/"; do sleep 1; done' _ "$port"; then
+            echo "::error::$name did not listen on port $port within 60 seconds"
+            exit 1
+          fi
+        done
     - run: pnpm test
     - cancel: blobgateway
     - cancel: blobstore_local
