@@ -91,3 +91,46 @@ test("slice", async ({request}) => {
     })
     expect(await downloadRes.text()).toStrictEqual(data.slice(2, 5))
 })
+
+test("nested slice", async ({request}) => {
+    let data = "hello, world!"
+    let key = "nested-slice-parent"
+
+    await request.put(`${URLS.blobgateway}/v1/content/by-ref/${namespace}/${key}`, {
+        data,
+        failOnStatusCode: true,
+    })
+
+    const slices = [[2, 9], [3, 5], [1, 2]] as const
+    for (const [index, [start, size]] of slices.entries()) {
+        const nextKey = `nested-slice-${index}`
+        await request.put(`${URLS.blobmanager}/v1/refs/${namespace}/${nextKey}`, {
+            data: toJson(PutBlobRefRequestSchema, create(PutBlobRefRequestSchema, {
+                content: {
+                    case: "fromBlobSlice",
+                    value: {
+                        source: {
+                            content: {
+                                case: "fromOtherRef",
+                                value: { namespace, key },
+                            },
+                        },
+                        start: BigInt(start),
+                        size: BigInt(size),
+                        hashes: {},
+                    },
+                },
+            })),
+            failOnStatusCode: true,
+        })
+        key = nextKey
+        data = data.slice(start, start + size)
+    }
+
+    const downloadRes = await request.get(`${URLS.blobgateway}/v1/content/by-ref/${namespace}/${key}`, {
+        failOnStatusCode: true,
+    })
+    expect(downloadRes.status()).toBe(200)
+    expect(downloadRes.headers()["content-length"]).toBe(String(data.length))
+    expect(await downloadRes.text()).toStrictEqual(data)
+})

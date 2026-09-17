@@ -1,13 +1,92 @@
+use std::collections::{HashMap, HashSet};
+
 use axum::{
     body::Body,
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
-use blobservices_core::proto;
-use hyper::header;
+use blobservices_core::{parsers::http_content_range::ContentRange, proto};
+use hyper::{HeaderMap, header};
 use reqwest::StatusCode;
 
-use crate::{NamespaceAndKey, state::AppState};
+use crate::{
+    NamespaceAndKey,
+    config::{Config, StoreServerConfig},
+    state::AppState,
+};
+
+struct ReadCandidate<'a> {
+    location: &'a proto::manager::BlobLocation,
+    config: &'a StoreServerConfig,
+    range: Option<ContentRange>,
+}
+
+fn find_read_candidates<'a>(
+    info: &'a proto::manager::GetBlobRefResponse,
+    config: &'a Config,
+) -> Vec<ReadCandidate<'a>> {
+    let blobs: HashMap<_, _> = std::iter::once(&info.blob)
+        .chain(&info.related_blobs)
+        .map(|blob| (blob.id.as_slice(), blob))
+        .collect();
+    let mut pending = vec![(&info.blob, 0)];
+    let mut visited = HashSet::new();
+    let mut candidates = Vec::new();
+
+    while let Some((blob, start)) = pending.pop() {
+        if !visited.insert((blob.id.as_slice(), start)) {
+            continue;
+        }
+
+        for location in info.locations.iter().filter(|l| l.blob_id == blob.id) {
+            let Some(store) = config.stores.get(&location.storage) else {
+                continue;
+            };
+            if store.can_read {
+                candidates.push(ReadCandidate {
+                    location,
+                    config: store,
+                    range: (blob.id != info.blob.id).then(|| ContentRange {
+                        start,
+                        end: start + info.blob.size - 1,
+                        entire_size: blob.size,
+                    }),
+                });
+            }
+        }
+
+        for operation in info
+            .operations
+            .iter()
+            .filter(|op| op.dst_blob_id == blob.id)
+        {
+            let Some(proto::manager::blob_operation::Operation::Slice(slice)) =
+                &operation.operation
+            else {
+                continue;
+            };
+            let dst_start = slice.dst_start();
+            let size = slice.size.unwrap_or(blob.size);
+            // This operation must cover the entire requested interval; joining pieces is separate.
+            if start < dst_start || start + info.blob.size > dst_start + size {
+                continue;
+            }
+            let source = blobs[operation.src_blob_id.as_slice()];
+            pending.push((source, slice.src_start() + (start - dst_start)));
+        }
+    }
+
+    candidates.sort_by_key(|candidate| candidate.config.priority);
+    candidates
+}
+
+fn matches_content_range(headers: &HeaderMap, expected: &ContentRange) -> bool {
+    headers
+        .get(header::CONTENT_RANGE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| ContentRange::parse(value).ok())
+        .is_some_and(|(_, actual)| actual == *expected)
+}
 
 async fn get_current_blob_info_by_ref(
     state: &AppState,
@@ -71,34 +150,22 @@ pub async fn get_blob_content_by_ref(
     }
 
     let mut storage_res = None;
-    let locations_and_configs = {
-        let mut lac: Vec<(
-            &proto::manager::BlobLocation,
-            &crate::config::StoreServerConfig,
-        )> = info
-            .locations
-            .iter()
-            .filter(|source| source.blob_id == info.blob.id)
-            .filter_map(|location| {
-                let location_config = &state.config.stores.get(&location.storage)?;
-                if !location_config.can_read {
-                    return None;
-                }
-                Some((location, *location_config))
-            })
-            .collect::<Vec<_>>();
-        lac.sort_by_key(|x| x.1.priority);
-        lac
-    };
-    for (location, location_config) in locations_and_configs {
-        // TODO: range request に対応したい
-        let mut res = location_config.url.clone();
-        res.path_segments_mut()
+    for candidate in find_read_candidates(&info, &state.config) {
+        let location = candidate.location;
+        let mut url = candidate.config.url.clone();
+        url.path_segments_mut()
             .unwrap()
             .push("v1")
             .push("simple")
             .push(&location.address);
-        let res = state.client.get(res).send().await;
+        let mut request = state.client.get(url);
+        if let Some(range) = &candidate.range {
+            request = request.header(
+                header::RANGE,
+                format!("bytes={}-{}", range.start, range.end),
+            );
+        }
+        let res = request.send().await;
         let res = match res {
             Ok(r) => r,
             Err(e) => {
@@ -106,11 +173,24 @@ pub async fn get_blob_content_by_ref(
                 continue;
             }
         };
-        if !res.status().is_success() {
+        if !res.status().is_success()
+            || (candidate.range.is_some() && res.status() != StatusCode::PARTIAL_CONTENT)
+        {
             tracing::warn!(
                 status = res.status().as_u16(),
                 storage = location.storage,
                 "FAILED_TO_GET_BLOB_FROM_STORAGE_HTTPERR"
+            );
+            continue;
+        }
+        if let Some(expected) = &candidate.range
+            && !matches_content_range(res.headers(), expected)
+        {
+            tracing::warn!(
+                storage = location.storage,
+                expected = %expected,
+                actual = ?res.headers().get(header::CONTENT_RANGE),
+                "FAILED_TO_GET_BLOB_FROM_STORAGE_CONTENT_RANGE"
             );
             continue;
         }
