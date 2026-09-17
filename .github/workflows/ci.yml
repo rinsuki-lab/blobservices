@@ -35,7 +35,7 @@ jobs:
         with:
           runtime: node@26
           cache: true
-    - run: pnpm install --frozen
+    - run: pnpm install --frozen-lockfile
       id: install-node-deps
       background: true
     - name: Init Database
