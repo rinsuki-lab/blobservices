@@ -1,0 +1,7 @@
+version: v2
+inputs:
+- directory: blobservices_core/proto/
+plugins:
+- local: protoc-gen-es
+  out: e2e/gen
+  opt: target=ts

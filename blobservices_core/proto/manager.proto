@@ -56,7 +56,7 @@ message PutBlobRefRequest {
         PutBlobRefWithBlobId unsafe_set_blob_id = 1;
         // 任意の storage/address を指定できるこれは unsafe (将来的に storage からの証明を付ける)
         PutBlobRefWithNewBlobInfo unsafe_new_blob = 2;
-        // PutBlobRefFromOtherRef fromOtherRef = 3;
+        PutBlobRefFromOtherRef fromOtherRef = 3;
         PutBlobRefFromSlice from_blob_slice = 4;
         PutBlobRefFromTransform from_blob_transform = 5;
         PutBlobRefFromConcat from_blob_concat = 6;
@@ -74,12 +74,11 @@ message PutBlobRefWithNewBlobInfo {
     required string address = 5;
 }
 
-// message PutBlobRefFromOtherRef {
-//     reserved 1;
-//     string namespace = 2;
-//     string key = 3;
-//     optional bytes expected_blob_id = 4; // 設定されていた場合、現在の値と一致しなかったらエラー (HTTP 409)
-// }
+message PutBlobRefFromOtherRef {
+    optional bytes expected_blob_id = 1; // 設定されていた場合、現在の値と一致しなかったらエラー (HTTP 409)
+    required string namespace = 2;
+    required string key = 3;
+}
 
 message PutBlobRefFromSlice {
     required PutBlobRefRequest source = 1;

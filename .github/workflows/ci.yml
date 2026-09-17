@@ -61,6 +61,7 @@ jobs:
     - run: cargo sqlx prepare --workspace && git diff --exit-code
       env:
         DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
+    - run: pnpm buf generate && git diff --exit-code
     - run: cargo clippy
     - run: cargo build
     # test

@@ -112,5 +112,9 @@ async fn make_blob_from_content(
             // TODO: 実装
             return Err(StatusCode::NOT_IMPLEMENTED.into_response());
         }
+        proto::manager::put_blob_ref_request::Content::FromOtherRef(recipe) => {
+            // TODO: 実装
+            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
+        }
     })
 }
