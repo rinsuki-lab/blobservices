@@ -29,6 +29,7 @@ jobs:
       - run: go install github.com/pgplex/pgschema@v1.12.0
       - run: brew update && brew install sqlx-cli
       - run: rustup default ${{ matrix.rust }} && rustup component add rustfmt clippy && cargo fmt --check
+      - run: pnpm install --frozen
     - name: Init Database
       run: |
         psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
@@ -48,3 +49,18 @@ jobs:
       env:
         DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
     - run: cargo clippy
+    - run: cargo build
+    # test
+    - run: cargo run --bin blobmanager
+      env:
+        DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
+      background: true
+    - run: mkdir -p $BLOBSTORE_LOCAL_ROOT_DIR; cargo run --bin blobstore_local
+      env:
+        BLOBSTORE_LOCAL_ROOT_DIR: /tmp/blobstore_local_root
+      background: true
+    - run: cargo run --bin blobgateway
+      env:
+        BLOBGATEWAY_CONFIG_FILE: .github/ci-files/blobgateway.config.json
+      background: true
+    - run: pnpm test

@@ -1,0 +1,13 @@
+{
+    "manager": {
+        "url": "http://localhost:3001"
+    },
+    "stores": {
+        "local": {
+            "url": "http://localhost:3002",
+            "priority": 1,
+            "can_read": true,
+            "can_write": true
+        }
+    }
+}
