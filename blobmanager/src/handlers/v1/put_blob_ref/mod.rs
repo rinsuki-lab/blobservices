@@ -1,5 +1,6 @@
 mod from_blob_slice;
 mod from_blob_transform;
+mod from_other_ref;
 mod shared;
 
 use axum::{
@@ -113,8 +114,7 @@ async fn make_blob_from_content(
             return Err(StatusCode::NOT_IMPLEMENTED.into_response());
         }
         proto::manager::put_blob_ref_request::Content::FromOtherRef(recipe) => {
-            // TODO: 実装
-            return Err(StatusCode::NOT_IMPLEMENTED.into_response());
+            from_other_ref::from_other_ref(tx, recipe).await?
         }
     })
 }

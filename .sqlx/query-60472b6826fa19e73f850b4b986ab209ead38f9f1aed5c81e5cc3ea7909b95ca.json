@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT revision.blob_id\n        FROM blob_references AS reference\n        INNER JOIN blob_reference_revisions AS revision\n            ON revision.id = reference.current_revision_id\n        WHERE reference.namespace = $1 AND reference.key = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "blob_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "blob_reference_revisions",
+            "name": "blob_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "60472b6826fa19e73f850b4b986ab209ead38f9f1aed5c81e5cc3ea7909b95ca"
+}
