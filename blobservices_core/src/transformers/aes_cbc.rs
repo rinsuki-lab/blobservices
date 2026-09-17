@@ -20,9 +20,9 @@ impl<S: ArraySize> IvSizeUser for IvSizeProxy<S> {
 type AesCbcIv = Iv<IvSizeProxy<U16>>;
 
 enum AesKey {
-    Aes128(Key<dyn KeySizeUser<KeySize = U16>>),
-    Aes192(Key<dyn KeySizeUser<KeySize = U24>>),
-    Aes256(Key<dyn KeySizeUser<KeySize = U32>>),
+    Aes128(Key<aes::Aes128>),
+    Aes192(Key<aes::Aes192>),
+    Aes256(Key<aes::Aes256>),
 }
 
 pub struct AesCbc {

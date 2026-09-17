@@ -232,6 +232,7 @@ dependencies = [
 name = "blobservices_core"
 version = "0.1.0"
 dependencies = [
+ "aes",
  "axum",
  "blake2s_simd",
  "crc-fast",
