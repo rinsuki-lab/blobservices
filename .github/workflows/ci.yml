@@ -60,16 +60,22 @@ jobs:
     - run: cargo build
     # test
     - run: cargo run --bin blobmanager
+      id: blobmanager
       env:
         DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
       background: true
     - run: mkdir -p $BLOBSTORE_LOCAL_ROOT_DIR; cargo run --bin blobstore_local
+      id: blobstore_local
       env:
         BLOBSTORE_LOCAL_ROOT_DIR: /tmp/blobstore_local_root
       background: true
     - run: cargo run --bin blobgateway
+      id: blobgateway
       env:
         BLOBGATEWAY_CONFIG_FILE: .github/ci-files/blobgateway.config.json
       background: true
     - wait: install-node-deps
     - run: pnpm test
+    - cancel: blobgateway
+    - cancel: blobstore_local
+    - cancel: blobmanager
