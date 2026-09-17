@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        ports:
+        - 5432:5432
+        env:
+          POSTGRES_PASSWORD: test
+    strategy:
+      matrix:
+        rust:
+          - 1.96.0
+          - 1.97.1
+          - 1.98.0
+          - 1.98.1
+          - nightly
+    steps:
+    - uses: actions/checkout@v7
+    - run: |
+        echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+    - parallel:
+      - run: sudo apt-get install -y protobuf-compiler
+      - run: brew update && brew install sqlx-cli
+      - run: rustup default ${{ matrix.rust }} && cargo build --bin blobmanager
+    - name: Init Database
+      run: |
+        psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
+    - run: cd blobmanager && sqlx migrate run
+      env:
+        DATABASE_URL: postgres://postgres:test@localhost:5432/blobmanager
+    - run: cargo run --bin blobmanager

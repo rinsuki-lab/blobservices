@@ -38,5 +38,9 @@ async fn main() {
         .await
         .expect("failed to listen server");
     tracing::info!("listening at {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+    tokio::net::TcpStream::connect(("127.0.0.1", 3001))
+        .await
+        .unwrap();
 }
