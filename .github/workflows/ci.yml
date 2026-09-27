@@ -39,10 +39,7 @@ jobs:
         uses: pnpm/setup@c9883cc79df532ad1a7b81bf9ab944ceb090d65c # v2.0.0
         with:
           runtime: node@26
-          cache: true
-    - run: pnpm install --frozen-lockfile
-      id: install-node-deps
-      background: true
+          require-lockfile: true
     - name: Init Database
       run: |
         psql postgres://postgres:test@localhost:5432/postgres -c 'CREATE DATABASE blobmanager'
@@ -80,7 +77,6 @@ jobs:
       env:
         BLOBGATEWAY_CONFIG_FILE: .github/ci-files/blobgateway.config.json
       background: true
-    - wait: install-node-deps
     - name: Wait for daemons to listen
       shell: bash
       run: |
@@ -94,6 +90,10 @@ jobs:
           fi
         done
     - run: pnpm test
+    - uses: actions/upload-artifact@v7
+      with:
+        name: test-results-rust-${{ matrix.rust }}
+        path: test-results
     - cancel: blobgateway
     - cancel: blobstore_local
     - cancel: blobmanager
