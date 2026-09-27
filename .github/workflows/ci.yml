@@ -94,8 +94,8 @@ jobs:
     - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
-        name: test-results-rust-${{ matrix.rust }}
-        path: test-results
+        name: playwright-report-rust-${{ matrix.rust }}
+        path: playwright-report
     - cancel: blobgateway
     - cancel: blobstore_local
     - cancel: blobmanager
